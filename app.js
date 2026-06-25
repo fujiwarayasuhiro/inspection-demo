@@ -6,56 +6,37 @@ function App() {
   const [fields, setFields] = useState([]);
   const [screen, setScreen] = useState("list");
   const [selectedIndex, setSelectedIndex] = useState(null);
-  // ✅ 数値書式（ユーザー定義含む）が設定されている項目を記憶するState
   const [numericFields, setNumericFields] = useState([]);
+  // 🔹 追加：ライブラリが読み込み中かどうかを管理する状態
+  const [isLoading, setIsLoading] = useState(false);
 
   // ○×判定
   const isBool = (label) => label && label.includes("○") && label.includes("×");
 
-  // 入力タイプ判定（値ベース ＋ エクセルの書式連動）
+  // 入力タイプ判定
   const getInputType = (headerName, value) => {
-    // エクセルの書式設定で数値（ユーザー定義含む）と判定された列は無条件で number 型にする
-    if (numericFields.includes(headerName)) {
-      return "number";
-    }
-
+    if (numericFields.includes(headerName)) return "number";
     if (!value) return "text";
-
-    // Excel日付シリアル
-    if (typeof value === "number" && value > 40000 && value < 50000) {
-      return "date";
-    }
-
-    // yyyy/mm/dd 或者 yyyy/mm
-    if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) {
-      return "date";
-    }
-
+    if (typeof value === "number" && value > 40000 && value < 50000) return "date";
+    if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) return "date";
     if (!isNaN(value) && value !== "") return "number";
-
     return "text";
   };
 
-  // ✅ 【修正】インデックス指定漏れを完全に修正
-  // エクセル用の形式（yyyy/mm/dd）から input[type="date"] 用の形式（yyyy-mm-dd）に安全に変換
+  // エクセル用の形式（yyyy/mm/dd）から input[type="date"] 用の形式（yyyy-mm-dd）に変換
   function formatDateForInput(value) {
     if (!value) return "";
-
-    // Excelシリアル値の場合
     if (typeof value === "number") {
       const date = new Date((value - 25569) * 86400 * 1000);
       return date.toISOString().substring(0, 10);
     }
-
-    // yyyy/mm/dd などの文字列の場合、ハイフンに置換
     if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) {
       const parts = value.split("/");
       const y = parts[0];
       const m = (parts[1] || "").padStart(2, "0");
-      const d = (parts[2] || "01").padStart(2, "0"); // 日にちがなければ01日を補完
+      const d = (parts[2] || "01").padStart(2, "0");
       return `${y}-${m}-${d}`;
     }
-
     return value;
   }
 
@@ -69,75 +50,97 @@ function App() {
     updateValue(key, formatted);
   };
 
+  // 🔹 修正：SheetJSライブラリをオンデマンドで動的読み込みする関数
+  const loadSheetJS = () => {
+    return new Promise((resolve, reject) => {
+      if (window.XLSX) {
+        resolve(window.XLSX);
+        return;
+      }
+      const script = document.createElement("script");
+      // 信頼性の高い大手CDN（cdnjs）から必要最小限の軽量版ミニマムファイルを非同期でロード
+      script.src = "https://cloudflare.com";
+      script.onload = () => resolve(window.XLSX);
+      script.onerror = () => reject(new Error("SheetJSの読み込みに失敗しました"));
+      document.head.appendChild(script);
+    });
+  };
+
   // Excel読込
-  const handleUpload = (e) => {
+  const handleUpload = async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
     const file = files[0];
     const reader = new FileReader();
 
-    reader.onload = (evt) => {
-      try {
-        // cellNF: true を指定して、ユーザー定義を含む「セルの書式設定」を取得
-        const wb = XLSX.read(evt.target.result, { type: "binary", cellNF: true });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    setIsLoading(true); // 🔹 読み込み中アニメーションON
 
-        if (!rows || rows.length === 0) return;
+    try {
+      // 🔹 ファイルが選択された「この瞬間」に初めて大容量ライブラリをロードする（初回起動が爆速に）
+      const XLSXLib = await loadSheetJS();
 
-        const currentHeaders = rows[0] || [];
-        const currentFields = rows[1] || [];
-        
-        setHeaders(currentHeaders);
-        setFields(currentFields);
+      reader.onload = (evt) => {
+        try {
+          const wb = XLSXLib.read(evt.target.result, { type: "binary", cellNF: true });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSXLib.utils.sheet_to_json(ws, { header: 1 });
 
-        // エクセル帳票の「3行目（r: 2）」のセルから書式設定を解析
-        let numCols = [];
-        currentHeaders.forEach((h, i) => {
-          const cellAddress = XLSX.utils.encode_cell({ r: 2, c: i });
-          const cell = ws[cellAddress];
-          
-          if (cell && cell.z) {
-            const formatStr = String(cell.z).toLowerCase();
-            // ユーザー定義などで使われる 「0」や「#」が含まれており、かつ日付フォーマット（y/m/d）ではない場合
-            const hasNumberFormat = formatStr.includes("0") || formatStr.includes("#");
-            const isNotDate = !formatStr.includes("y") && !formatStr.includes("m") && !formatStr.includes("d");
-            
-            if (hasNumberFormat && isNotDate) {
-              numCols.push(h); // 数値列として登録
-            }
+          if (!rows || rows.length === 0) {
+            setIsLoading(false);
+            return;
           }
-        });
-        setNumericFields(numCols);
 
-        // 3行目以降をレコードデータとして処理
-        const data = rows.slice(2).map(row => {
-          let obj = {};
+          const currentHeaders = rows[0] || [];
+          const currentFields = rows[1] || [];
+          
+          setHeaders(currentHeaders);
+          setFields(currentFields);
+
+          let numCols = [];
           currentHeaders.forEach((h, i) => {
-            let val = row[i] === undefined || row[i] === null ? "" : row[i];
-            
-            // 読み込み時に日付シリアル値があれば、yyyy/mm/dd 文字列に直しておく（ただし数値専用列は除外）
-            if (typeof val === "number" && val > 40000 && val < 50000 && !numCols.includes(h)) {
-              const date = new Date((val - 25569) * 86400 * 1000);
-              const y = date.getFullYear();
-              const m = String(date.getMonth() + 1).padStart(2, "0");
-              const d = String(date.getDate()).padStart(2, "0");
-              val = `${y}/${m}/${d}`;
+            const cellAddress = XLSXLib.utils.encode_cell({ r: 2, c: i });
+            const cell = ws[cellAddress];
+            if (cell && cell.z) {
+              const formatStr = String(cell.z).toLowerCase();
+              const hasNumberFormat = formatStr.includes("0") || formatStr.includes("#");
+              const isNotDate = !formatStr.includes("y") && !formatStr.includes("m") && !formatStr.includes("d");
+              if (hasNumberFormat && isNotDate) numCols.push(h);
             }
-            obj[h] = val;
           });
-          return obj;
-        });
+          setNumericFields(numCols);
 
-        setRecords(data);
-      } catch (err) {
-        console.error("エクセル読み込みエラー:", err);
-        alert("エクセルファイルの読み込みに失敗しました。ファイル構造を確認してください。");
-      }
-    };
+          const data = rows.slice(2).map(row => {
+            let obj = {};
+            currentHeaders.forEach((h, i) => {
+              let val = row[i] === undefined || row[i] === null ? "" : row[i];
+              if (typeof val === "number" && val > 40000 && val < 50000 && !numCols.includes(h)) {
+                const date = new Date((val - 25569) * 86400 * 1000);
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, "0");
+                const d = String(date.getDate()).padStart(2, "0");
+                val = `${y}/${m}/${d}`;
+              }
+              obj[h] = val;
+            });
+            return obj;
+          });
 
-    reader.readAsBinaryString(file);
+          setRecords(data);
+          setIsLoading(false); // 🔹 処理完了
+        } catch (err) {
+          console.error(err);
+          alert("エクセルのデータ処理に失敗しました。");
+          setIsLoading(false);
+        }
+      };
+      reader.readAsBinaryString(file);
+
+    } catch (err) {
+      console.error(err);
+      alert("ファイル解析ライブラリの準備に失敗しました。ネット環境を確認してください。");
+      setIsLoading(false);
+    }
   };
 
   // 更新
@@ -147,43 +150,38 @@ function App() {
     setRecords(newData);
   };
 
-  // ✅ 【修正】インデックス指定漏れを完全に修正し、安全に時差バグを回避
-  // Excel出力（日付フォーマットの適用）
-  const exportExcel = () => {
-    const rows = records.map(r => headers.map(h => r[h] === undefined || r[h] === null ? "" : r[h]));
-
-    const ws = XLSX.utils.aoa_to_sheet([
-      headers,
-      fields,
-      ...rows
-    ]);
-
-    // 日付文字列（yyyy/mm/dd）をエクセルのシリアル値＋日付書式に置換
-    Object.keys(ws).forEach(cellRef => {
-      if (cellRef.startsWith("!")) return;
-      const cell = ws[cellRef];
+  // Excel出力
+  const exportExcel = async () => {
+    try {
+      setIsLoading(true);
+      const XLSXLib = await loadSheetJS(); // 出力時にもライブラリを確認
       
-      if (cell && cell.v && typeof cell.v === "string" && cell.v.match(/^\d{4}\/\d{1,2}\/\d{1,2}/)) {
-        const parts = cell.v.split("/");
-        const year = Number(parts[0]);
-        const month = Number(parts[1]);
-        const day = Number(parts[2]);
-        
-        // 時差（UTC）の影響を受けないように、ローカルの昼（12時）としてDateオブジェクトを作成
-        const dateObj = new Date(year, month - 1, day, 12, 0, 0);
-        
-        if (!isNaN(dateObj.getTime())) {
-          const excelSerial = (dateObj.getTime() / (86400 * 1000)) + 25569;
-          cell.t = "n"; 
-          cell.v = Math.floor(excelSerial); // 確実に該当日に固定
-          cell.z = "yyyy/mm/dd"; 
-        }
-      }
-    });
+      const rows = records.map(r => headers.map(h => r[h] === undefined || r[h] === null ? "" : r[h]));
+      const ws = XLSXLib.utils.aoa_to_sheet([headers, fields, ...rows]);
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-    XLSX.writeFile(wb, "result.xlsx");
+      Object.keys(ws).forEach(cellRef => {
+        if (cellRef.startsWith("!")) return;
+        const cell = ws[cellRef];
+        if (cell && cell.v && typeof cell.v === "string" && cell.v.match(/^\d{4}\/\d{1,2}\/\d{1,2}/)) {
+          const parts = cell.v.split("/");
+          const dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 12, 0, 0);
+          if (!isNaN(dateObj.getTime())) {
+            cell.t = "n"; 
+            cell.v = Math.floor((dateObj.getTime() / (86400 * 1000)) + 25569); 
+            cell.z = "yyyy/mm/dd"; 
+          }
+        }
+      });
+
+      const wb = XLSXLib.utils.book_new();
+      XLSXLib.utils.book_append_sheet(wb, ws, "Sheet1");
+      XLSXLib.writeFile(wb, "result.xlsx");
+      setIsLoading(false);
+    } catch (err) {
+      console.error(err);
+      alert("エクセル出力に失敗しました。");
+      setIsLoading(false);
+    }
   };
 
   // ========================
@@ -194,15 +192,20 @@ function App() {
       React.createElement("div", null,
         React.createElement("div", { className: "header" }, "点検一覧"),
         React.createElement("div", { className: "container" },
+          // 🔹 ローディング表示
+          isLoading && React.createElement("div", { className: "loading-overlay" }, "処理中..."),
+          
           React.createElement("input", {
             type: "file",
-            onChange: handleUpload
+            onChange: handleUpload,
+            disabled: isLoading
           }),
           records.map((rec, i) =>
             React.createElement("div", {
               key: i,
               className: "card",
               onClick: () => {
+                if (isLoading) return;
                 setSelectedIndex(i);
                 setScreen("detail");
               }
@@ -217,7 +220,8 @@ function App() {
           records.length > 0 &&
           React.createElement("button", {
             className: "button",
-            onClick: exportExcel
+            onClick: exportExcel,
+            disabled: isLoading
           }, "Excelダウンロード")
         )
       )
@@ -250,7 +254,6 @@ function App() {
           },
             React.createElement("div", { className: "card-title" }, h),
             
-            // ✅ ○×
             isBool(h) &&
             React.createElement("div", { className: "radio-row" },
               React.createElement("label", { className: "radio-item is-maru" },
@@ -273,7 +276,6 @@ function App() {
               )
             ),
 
-            // ✅ 入力欄
             !isBool(h) &&
             React.createElement("input", {
               type: type,
