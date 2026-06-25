@@ -19,7 +19,48 @@ body {
   padding: 16px;
   max-width: 420px;
   margin: auto;
-  box-sizing: border-box; /* 🔹 コンテナ自体のはみ出しも防止 */
+  box-sizing: border-box;
+}
+
+/* 📌 詳細画面の上部固定エリア */
+.detail-screen {
+  padding-top: 115px; /* 🔹 上部固定ヘッダーの高さ分の隙間を作ってはみ出し防止 */
+}
+
+.sticky-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #f4f6f9; /* 背景と同色にしてスクロールの透けを防止 */
+}
+
+.action-bar {
+  max-width: 420px;
+  margin: auto;
+  padding: 8px 16px;
+  box-sizing: border-box;
+}
+
+/* 🔙 戻るボタンのデザイン（シンプルかつ押しやすく） */
+.button-back {
+  display: inline-block;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #444;
+  background: white;
+  border: 1px solid #ccd4dc;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+}
+
+.button-back:active {
+  background: #f0f2f5;
+  transform: translateY(1px);
 }
 
 /* 📦 カードデザイン */
@@ -30,7 +71,7 @@ body {
   margin-bottom: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-  box-sizing: border-box; /* 🔹 必須：パディングを含めて計算 */
+  box-sizing: border-box;
   border: 1px solid #eef2f5;
 }
 
@@ -41,13 +82,13 @@ body {
   color: #444;
 }
 
-/* ✍️ 入力欄はみ出し防止（最重要） */
+/* ✍️ 入力欄はみ出し防止 */
 input[type="text"],
 input[type="number"],
 input[type="date"] {
   width: 100%;
-  display: block; /* 🔹 隙間をなくす */
-  box-sizing: border-box; /* 🔹 必須：これではみ出さなくなります */
+  display: block;
+  box-sizing: border-box;
   padding: 12px;
   font-size: 16px;
   border: 1px solid #ccd4dc;
@@ -65,17 +106,17 @@ input[type="date"]:focus {
   box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.15);
 }
 
-/* 🔘 ラジオボタン（タイル風のモダンデザイン） */
+/* 🔘 ラジオボタン基本構造 */
 .radio-row {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  gap: 12px; /* 🔹 スマホで押しやすい適度な間隔 */
+  gap: 12px;
   flex-wrap: nowrap;
 }
 
 .radio-item {
-  flex: 1; /* 🔹 左右均等な幅に広げる */
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -86,27 +127,39 @@ input[type="date"]:focus {
   border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
-  font-size: 16px;
+  font-size: 18px; /* 記号を見やすく少し大きく */
   transition: all 0.2s;
   user-select: none;
+  color: #666;
 }
 
-/* ラジオボタンの標準のポチを非表示にしてカスタム */
 .radio-item input[type="radio"] {
   width: 18px;
   height: 18px;
   margin: 0;
-  accent-color: #0078d4; /* 🔹 チェック時の色をメインカラーに */
 }
 
-/* チェックされた時のカード全体のスタイル */
-.radio-item:has(input[type="radio"]:checked) {
-  background: #e1f0fc;
-  border-color: #0078d4;
-  color: #0078d4;
+/* 🟢 ○（緑色）のスタイル */
+.radio-item.is-maru input[type="radio"] {
+  accent-color: #2e7d32; /* チェックポチの色 */
+}
+.radio-item.is-maru:has(input[type="radio"]:checked) {
+  background: #e8f5e9;
+  border-color: #2e7d32;
+  color: #2e7d32;
 }
 
-/* 🚀 おしゃれなボタン群 */
+/* 🔴 ×（赤色）のスタイル */
+.radio-item.is-batsu input[type="radio"] {
+  accent-color: #d32f2f; /* チェックポチの色 */
+}
+.radio-item.is-batsu:has(input[type="radio"]:checked) {
+  background: #ffebee;
+  border-color: #d32f2f;
+  color: #d32f2f;
+}
+
+/* 🚀 ダウンロードボタン等 */
 .button {
   display: block;
   width: 100%;
@@ -131,7 +184,7 @@ input[type="date"]:focus {
   background: #0066b3;
 }
 
-/* 📁 ファイルアップロード（デフォルトを隠しておしゃれに変身） */
+/* 📁 ファイルアップロード */
 input[type="file"] {
   display: block;
   width: 100%;
@@ -158,12 +211,14 @@ input[type="file"]::file-selector-button {
   transition: background 0.2s;
 }
 
-input[type="file"]::file-selector-button:hover {
-  background: #d0e7f9;
-}
-
 /* 📱 スマホ最適化 */
 @media (max-width: 480px) {
+  .detail-screen {
+    padding-top: 100px; /* スマホ用に固定幅の微調整 */
+  }
+  .action-bar {
+    padding: 6px 12px;
+  }
   .container {
     padding: 12px;
   }
@@ -179,10 +234,6 @@ input[type="file"]::file-selector-button:hover {
   }
   .radio-item {
     padding: 10px;
-    font-size: 15px;
-  }
-  .button {
-    padding: 12px;
-    font-size: 15px;
+    font-size: 16px;
   }
 }
