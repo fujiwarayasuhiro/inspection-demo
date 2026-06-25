@@ -6,6 +6,8 @@ function App() {
   const [fields, setFields] = useState([]);
   const [screen, setScreen] = useState("list");
   const [selectedIndex, setSelectedIndex] = useState(null);
+  // ✅ 保護されている項目（ヘッダー名）を記憶するState
+  const [protectedFields, setProtectedFields] = useState([]);
 
   // ○×判定
   const isBool = (label) => label.includes("○") && label.includes("×");
@@ -58,12 +60,28 @@ function App() {
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
-      setHeaders(rows[0]);
-      setFields(rows[1]);
+      const currentHeaders = rows[0] || [];
+      setHeaders(currentHeaders);
+      setFields(rows[1] || []);
+
+      // ✅ セルの保護情報を読み取る
+      let lockedCols = [];
+      currentHeaders.forEach((h, i) => {
+        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: i });
+        const cell = ws[cellAddress];
+        
+        // 書式設定で「ロック」のチェックが外されていない（＝保護対象である）項目を特定
+        const isLocked = !cell || !cell.s || !cell.s.protect || cell.s.protect.locked !== false;
+        
+        if (isLocked) {
+          lockedCols.push(h);
+        }
+      });
+      setProtectedFields(lockedCols);
 
       const data = rows.slice(2).map(row => {
         let obj = {};
-        rows[0].forEach((h, i) => obj[h] = row[i] || "");
+        currentHeaders.forEach((h, i) => obj[h] = row[i] || "");
         return obj;
       });
 
@@ -145,21 +163,21 @@ function App() {
   // 詳細画面
   // ========================
   return (
-    React.createElement("div", { className: "detail-screen" }, // 🔹 全体を包むクラスを追加
+    React.createElement("div", { className: "detail-screen" },
 
-      // 🔹 ヘッダーと戻るボタンを固定するエリア
+      // ✅ 画面上部にスクロール固定されるヘッダーエリア
       React.createElement("div", { className: "sticky-header" },
         React.createElement("div", { className: "header" }, "点検入力"),
         React.createElement("div", { className: "action-bar" },
           React.createElement("button", {
-            className: "button-back", // 🔹 戻るボタン専用のクラス
+            className: "button-back",
             onClick: () => setScreen("list")
           }, "← 戻る")
         )
       ),
 
-      // 🔹 スクロールする中身のエリア
-      React.createElement("div", { className: "container scroll-content" },
+      // ✅ 下部にスクロールするカードコンテンツ
+      React.createElement("div", { className: "container" },
 
         headers.map((h, i) => {
           const rawValue = records[selectedIndex][h] || "";
@@ -168,9 +186,12 @@ function App() {
             ? formatDate(rawValue)
             : rawValue;
 
+          // ✅ この列が保護対象（編集不可）か判定
+          const isReadOnly = protectedFields.includes(h);
+
           return React.createElement("div", {
             key: i,
-            className: "card"
+            className: `card ${isReadOnly ? "is-disabled" : ""}`
           },
 
             React.createElement("div", {
@@ -181,21 +202,23 @@ function App() {
             isBool(h) &&
             React.createElement("div", { className: "radio-row" },
 
-              React.createElement("label", { className: "radio-item is-maru" }, // 🔹 ○専用クラス
+              React.createElement("label", { className: "radio-item is-maru" },
                 React.createElement("input", {
                   type: "radio",
-                  name: h,
+                  name: h, // 各項目ごとにグループを分ける
                   checked: rawValue === "○",
+                  disabled: isReadOnly, // 保護時は操作不可
                   onChange: () => updateValue(h, "○")
                 }),
                 React.createElement("span", null, "○")
               ),
 
-              React.createElement("label", { className: "radio-item is-batsu" }, // 🔹 ×専用クラス
+              React.createElement("label", { className: "radio-item is-batsu" },
                 React.createElement("input", {
                   type: "radio",
-                  name: h,
+                  name: h, // 各項目ごとにグループを分ける
                   checked: rawValue === "×",
+                  disabled: isReadOnly, // 保護時は操作不可
                   onChange: () => updateValue(h, "×")
                 }),
                 React.createElement("span", null, "×")
@@ -207,6 +230,7 @@ function App() {
             React.createElement("input", {
               type: type,
               value: value,
+              disabled: isReadOnly, // 保護時は入力不可
               onChange: (e) => updateValue(h, e.target.value)
             })
           );
