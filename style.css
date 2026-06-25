@@ -82,7 +82,7 @@ body {
   color: #444;
 }
 
-/* ✍️ 入力欄はみ出し防止 */
+/* ✍️ 入力欄はみ出し防止（背景を白に修正） */
 input[type="text"],
 input[type="number"],
 input[type="date"] {
@@ -93,7 +93,7 @@ input[type="date"] {
   font-size: 16px;
   border: 1px solid #ccd4dc;
   border-radius: 8px;
-  background-color: #fafafa;
+  background-color: #ffffff; /* 🔹 前の明るい白に戻しました */
   transition: all 0.2s ease;
 }
 
@@ -102,7 +102,7 @@ input[type="number"]:focus,
 input[type="date"]:focus {
   outline: none;
   border-color: #0078d4;
-  background-color: #fff;
+  background-color: #ffffff; /* 🔹 フォーカス時も白を維持 */
   box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.15);
 }
 
