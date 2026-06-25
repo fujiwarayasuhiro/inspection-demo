@@ -13,7 +13,7 @@ body {
 
 .container {
   padding: 10px;
-  max-width: 480px;
+  max-width: 420px;
   margin: auto;
 }
 
@@ -21,45 +21,45 @@ body {
   background: white;
   border-radius: 12px;
   padding: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   overflow: hidden;
 }
 
 .card-title {
   font-weight: bold;
-  margin-bottom: 8px;
   font-size: 14px;
+  margin-bottom: 8px;
 }
 
-/* ✅ 入力欄崩れ防止（最重要） */
-input {
+/* ✅ 入力欄はみ出し防止（最重要） */
+input[type="text"],
+input[type="number"],
+input[type="date"] {
   width: 100%;
   box-sizing: border-box;
   padding: 10px;
   font-size: 16px;
-  margin-top: 5px;
 }
 
-/* ✅ ラジオ完全固定 */
+/* ✅ ラジオ必ず横並び */
 .radio-row {
   display: flex;
-  flex-direction: row;
   justify-content: flex-start;
+  align-items: center;
   gap: 30px;
-  width: 100%;
+  flex-wrap: nowrap;
 }
 
-/* ✅ ラジオ1つ */
+/* ✅ 各要素 */
 .radio-item {
   display: flex;
   align-items: center;
   gap: 6px;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
-/* ✅ スマホでも崩れない */
+/* ✅ スマホ完全対応 */
 @media (max-width: 480px) {
 
   .container {
@@ -71,10 +71,6 @@ input {
   }
 
   .radio-row {
-    gap: 24px;
-  }
-
-  input {
-    font-size: 16px;
+    gap: 20px;
   }
 }
