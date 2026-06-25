@@ -237,3 +237,20 @@ input[type="file"]::file-selector-button {
     font-size: 16px;
   }
 }
+
+/* ⏳ 読み込み中（ローディング）の演出スタイル */
+.loading-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 14px;
+  z-index: 999;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  pointer-events: none; /* 背後の操作を一時ブロック */
+}
