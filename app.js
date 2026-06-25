@@ -6,8 +6,6 @@ function App() {
   const [fields, setFields] = useState([]);
   const [screen, setScreen] = useState("list");
   const [selectedIndex, setSelectedIndex] = useState(null);
-  // ✅ 保護されている項目（ヘッダー名）を記憶するState
-  const [protectedFields, setProtectedFields] = useState([]);
 
   // ○×判定
   const isBool = (label) => label.includes("○") && label.includes("×");
@@ -52,37 +50,20 @@ function App() {
 
   // Excel読込
   const handleUpload = (e) => {
-    const file = e.target.files[0]; // 🔹 複数ファイル選択エラー防止のため [0] に修正
+    const file = e.target.files[0];
     const reader = new FileReader();
 
     reader.onload = (evt) => {
       const wb = XLSX.read(evt.target.result, { type: "binary" });
-      const ws = wb.Sheets[wb.SheetNames[0]]; // 🔹 シート名インデックスを明示指定
+      const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
-      const currentHeaders = rows[0] || [];
-      setHeaders(currentHeaders);
+      setHeaders(rows[0] || []);
       setFields(rows[1] || []);
-
-      // ✅ 【修正】エクセル帳票の「3行目（r: 2）」のセルから保護情報を読み取る
-      let lockedCols = [];
-      currentHeaders.forEach((h, i) => {
-        // r: 2 がエクセルの3行目を指します（0始まりのため 0=1行目, 1=2行目, 2=3行目）
-        const cellAddress = XLSX.utils.encode_cell({ r: 2, c: i });
-        const cell = ws[cellAddress];
-        
-        // 書式設定で「ロック」のチェックが外されていない（＝保護対象である）項目を特定
-        const isLocked = !cell || !cell.s || !cell.s.protect || cell.s.protect.locked !== false;
-        
-        if (isLocked) {
-          lockedCols.push(h);
-        }
-      });
-      setProtectedFields(lockedCols);
 
       const data = rows.slice(2).map(row => {
         let obj = {};
-        currentHeaders.forEach((h, i) => obj[h] = row[i] || "");
+        rows[0].forEach((h, i) => obj[h] = row[i] || "");
         return obj;
       });
 
@@ -187,12 +168,9 @@ function App() {
             ? formatDate(rawValue)
             : rawValue;
 
-          // ✅ この列が保護対象（編集不可）か判定
-          const isReadOnly = protectedFields.includes(h);
-
           return React.createElement("div", {
             key: i,
-            className: `card ${isReadOnly ? "is-disabled" : ""}`
+            className: "card"
           },
 
             React.createElement("div", {
@@ -208,7 +186,6 @@ function App() {
                   type: "radio",
                   name: h, // 各項目ごとにグループを分ける
                   checked: rawValue === "○",
-                  disabled: isReadOnly, // 保護時は操作不可
                   onChange: () => updateValue(h, "○")
                 }),
                 React.createElement("span", null, "○")
@@ -219,7 +196,6 @@ function App() {
                   type: "radio",
                   name: h, // 各項目ごとにグループを分ける
                   checked: rawValue === "×",
-                  disabled: isReadOnly, // 保護時は操作不可
                   onChange: () => updateValue(h, "×")
                 }),
                 React.createElement("span", null, "×")
@@ -231,7 +207,6 @@ function App() {
             React.createElement("input", {
               type: type,
               value: value,
-              disabled: isReadOnly, // 保護時は入力不可
               onChange: (e) => updateValue(h, e.target.value)
             })
           );
