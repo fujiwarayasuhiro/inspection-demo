@@ -237,3 +237,35 @@ input[type="file"]::file-selector-button {
     font-size: 16px;
   }
 }
+
+/* 🔒 セル保護（グレーアウト）時のスタイル */
+.card.is-disabled {
+  background: #f0f2f5;     /* カード自体の背景をグレーに */
+  border-color: #e2e8f0;
+}
+
+.card.is-disabled .card-title {
+  color: #888;             /* タイトルの文字を薄く */
+}
+
+/* 入力欄が非活性(disabled)の時 */
+input:disabled {
+  background-color: #e2e8f0 !important; /* より濃いグレーに */
+  color: #718096 !important;             /* 文字色を薄く */
+  border-color: #cbd5e1 !important;
+  cursor: not-allowed;                   /* マウスカーソルを禁止マークに */
+}
+
+/* ラジオボタンが非活性(disabled)の時 */
+.card.is-disabled .radio-item {
+  background: #e2e8f0;
+  color: #a0aec0;
+  cursor: not-allowed;
+  border-color: transparent !important;
+}
+
+/* 保護されているかつ、チェックが入っているラジオボタンの見た目を落ち着かせる */
+.card.is-disabled .radio-item:has(input[type="radio"]:checked) {
+  background: #cbd5e1;
+  color: #4a5568;
+}
