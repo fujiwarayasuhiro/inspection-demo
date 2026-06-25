@@ -7,27 +7,23 @@ function App() {
   const [screen, setScreen] = useState("list");
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [numericFields, setNumericFields] = useState([]);
+  // 🔹 追加：選択されたファイル名を記憶するState
+  const [fileName, setFileName] = useState("");
 
   // ○×判定
   const isBool = (label) => label && label.includes("○") && label.includes("×");
 
-  // 入力タイプ判定（値ベース ＋ エクセルの書式連動）
+  // 入力タイプ判定
   const getInputType = (headerName, value) => {
-    if (numericFields.includes(headerName)) {
-      return "number";
-    }
+    if (numericFields.includes(headerName)) return "number";
     if (!value) return "text";
-    if (typeof value === "number" && value > 40000 && value < 50000) {
-      return "date";
-    }
-    if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) {
-      return "date";
-    }
+    if (typeof value === "number" && value > 40000 && value < 50000) return "date";
+    if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) return "date";
     if (!isNaN(value) && value !== "") return "number";
     return "text";
   };
 
-  // エクセル用の形式（yyyy/mm/dd）から input[type="date"] 用の形式（yyyy-mm-dd）に安全に変換
+  // エクセル用の形式から input[type="date"] 用の形式に変換
   function formatDateForInput(value) {
     if (!value) return "";
     if (typeof value === "number") {
@@ -44,7 +40,7 @@ function App() {
     return value;
   }
 
-  // input[type="date"] から値が変わった時、エクセル用の「yyyy/mm/dd」に逆変換して保存
+  // input[type="date"] から値が変わった時、エクセル用の形式に逆変換して保存
   const handleDateChange = (key, rawValue) => {
     if (!rawValue) {
       updateValue(key, "");
@@ -54,12 +50,13 @@ function App() {
     updateValue(key, formatted);
   };
 
-  // Excel読込（ローカル内蔵の XLSX オブジェクトを直接使用）
+  // Excel読込
   const handleUpload = (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
     const file = files[0];
+    setFileName(file.name); // 🔹 選択されたファイル名を記憶
     const reader = new FileReader();
 
     reader.onload = (evt) => {
@@ -88,9 +85,7 @@ function App() {
             const formatStr = String(cell.z).toLowerCase();
             const hasNumberFormat = formatStr.includes("0") || formatStr.includes("#");
             const isNotDate = !formatStr.includes("y") && !formatStr.includes("m") && !formatStr.includes("d");
-            if (hasNumberFormat && isNotDate) {
-              numCols.push(h);
-            }
+            if (hasNumberFormat && isNotDate) numCols.push(h);
           }
         });
         setNumericFields(numCols);
@@ -161,7 +156,7 @@ function App() {
     XLSX.writeFile(wb, "result.xlsx");
   };
 
-  // 🔹 初回表示高速化のための工夫（useMemoでカードの再描画コストを削減）
+  // 初回表示高速化のための工夫
   const renderListCards = useMemo(() => {
     return records.map((rec, i) =>
       React.createElement("div", {
@@ -189,12 +184,25 @@ function App() {
       React.createElement("div", null,
         React.createElement("div", { className: "header" }, "点検一覧"),
         React.createElement("div", { className: "container" },
-          React.createElement("input", {
-            type: "file",
-            onChange: handleUpload
-          }),
-          // キャッシュされた一覧カードを描画
+          
+          // 🔹 修正：標準のボタンを完全に隠し、おしゃれなカスタムデザインのアップロードボタンにする
+          React.createElement("label", { className: "file-upload-label" },
+            React.createElement("input", {
+              type: "file",
+              className: "file-input-hidden",
+              onChange: handleUpload
+            }),
+            React.createElement("span", { className: "upload-btn-text" }, "📁 エクセルファイルを選択")
+          ),
+          
+          // 🔹 追加：ファイルが読み込まれている場合、ファイル名を表示するエリア
+          fileName && React.createElement("div", { className: "file-status-bar" },
+            React.createElement("span", { className: "file-status-badge" }, "読込中"),
+            React.createElement("span", { className: "file-name-text" }, fileName)
+          ),
+
           renderListCards,
+          
           records.length > 0 &&
           React.createElement("button", {
             className: "button",
