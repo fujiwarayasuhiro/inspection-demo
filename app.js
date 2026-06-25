@@ -175,19 +175,21 @@ function App() {
             // ✅ ○×（完全1行固定）
             isBool(h) &&
             React.createElement("div", { className: "radio-row" },
-
+            
               React.createElement("label", { className: "radio-item" },
                 React.createElement("input", {
                   type: "radio",
+                  name: h, // 🔹 項目ごとに独立させるため name 属性を追加
                   checked: rawValue === "○",
                   onChange: () => updateValue(h, "○")
                 }),
                 React.createElement("span", null, "○")
               ),
-
+            
               React.createElement("label", { className: "radio-item" },
                 React.createElement("input", {
                   type: "radio",
+                  name: h, // 🔹 項目ごとに独立させるため name 属性を追加
                   checked: rawValue === "×",
                   onChange: () => updateValue(h, "×")
                 }),
