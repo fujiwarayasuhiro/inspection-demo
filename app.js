@@ -8,7 +8,7 @@ function App() {
   const [selectedIndex, setSelectedIndex] = useState(null);
 
   // ○×判定
-  const isBool = (label) => label.includes("○") && label.includes("×");
+  const isBool = (label) => label && label.includes("○") && label.includes("×");
 
   // 入力タイプ判定（値ベース）
   const getInputType = (value) => {
@@ -29,7 +29,7 @@ function App() {
     return "text";
   };
 
-  // 🔹 修正：エクセル用の形式（yyyy/mm/dd）から input[type="date"] 用の形式（yyyy-mm-dd）に変換
+  // 🔹 エクセル用の形式（yyyy/mm/dd）から input[type="date"] 用の形式（yyyy-mm-dd）に安全に変換
   function formatDateForInput(value) {
     if (!value) return "";
 
@@ -51,7 +51,7 @@ function App() {
     return value;
   }
 
-  // 🔹 追加：input[type="date"] から値が変わった時、エクセル用の「yyyy/mm/dd」に逆変換して保存
+  // 🔹 input[type="date"] から値が変わった時、エクセル用の「yyyy/mm/dd」に逆変換して保存
   const handleDateChange = (key, rawValue) => {
     if (!rawValue) {
       updateValue(key, "");
@@ -64,21 +64,31 @@ function App() {
 
   // Excel読込
   const handleUpload = (e) => {
-    const file = e.target.files;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
     const reader = new FileReader();
 
     reader.onload = (evt) => {
       const wb = XLSX.read(evt.target.result, { type: "binary" });
-      const ws = wb.Sheets[wb.SheetNames];
+      const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
-      setHeaders(rows || []);
-      setFields(rows || []);
+      if (!rows || rows.length === 0) return;
 
+      // 🔹 修正: 行全体ではなく、1行目をヘッダー、2行目をフィールドとして正しく切り出す
+      const currentHeaders = rows[0] || [];
+      const currentFields = rows[1] || [];
+      
+      setHeaders(currentHeaders);
+      setFields(currentFields);
+
+      // 3行目（インデックス2）以降を実際のレコード（データ）として読み込む
       const data = rows.slice(2).map(row => {
         let obj = {};
-        rows.forEach((h, i) => {
-          let val = row[i] || "";
+        currentHeaders.forEach((h, i) => {
+          let val = row[i] === undefined || row[i] === null ? "" : row[i];
           // 読み込み時に日付シリアル値があれば、一旦 yyyy/mm/dd 文字列に直して保持しておく
           if (typeof val === "number" && val > 40000 && val < 50000) {
             const date = new Date((val - 25569) * 86400 * 1000);
@@ -105,9 +115,9 @@ function App() {
     setRecords(newData);
   };
 
-  // 🔹 修正：Excel出力（日付フォーマットの適用）
+  // 🔹 Excel出力（日付フォーマットの適用）
   const exportExcel = () => {
-    const rows = records.map(r => headers.map(h => r[h] || ""));
+    const rows = records.map(r => headers.map(h => r[h] === undefined || r[h] === null ? "" : r[h]));
 
     const ws = XLSX.utils.aoa_to_sheet([
       headers,
@@ -115,21 +125,21 @@ function App() {
       ...rows
     ]);
 
-    // 🔹 シート内の全セルをスキャンし、日付文字列（yyyy/mm/dd）をエクセルの「シリアル値＋日付書式」に置換
+    // シート内の全セルをスキャンし、日付文字列（yyyy/mm/dd）をエクセルの「シリアル値＋日付書式」に置換
     Object.keys(ws).forEach(cellRef => {
       if (cellRef.startsWith("!")) return;
       const cell = ws[cellRef];
       
       if (cell && cell.v && typeof cell.v === "string" && cell.v.match(/^\d{4}\/\d{1,2}\/\d{1,2}/)) {
         const parts = cell.v.split("/");
-        const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+        const dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
         
         // エクセルのシリアル値に計算し直す
         const excelSerial = (dateObj.getTime() / (86400 * 1000)) + 25569;
         
         cell.t = "n"; // タイプを数値(number)に変更
         cell.v = excelSerial; // 値をシリアル値に変更
-        cell.z = "yyyy/mm/dd"; // 🔹 エクセル上の表示形式を固定指定
+        cell.z = "yyyy/mm/dd"; // エクセル上の表示形式を固定指定
       }
     });
 
@@ -167,7 +177,7 @@ function App() {
             },
               headers.slice(0, 4).map((h, idx) =>
                 React.createElement("div", { key: idx },
-                  rec[h] || ""
+                  String(rec[h] || "")
                 )
               )
             )
@@ -205,10 +215,10 @@ function App() {
       React.createElement("div", { className: "container" },
 
         headers.map((h, i) => {
-          const rawValue = records[selectedIndex][h] || "";
+          const rawValue = records[selectedIndex][h] === undefined || records[selectedIndex][h] === null ? "" : records[selectedIndex][h];
           const type = getInputType(rawValue);
           
-          // 🔹 変更：日付の場合は input 用フォーマット(yyyy-mm-dd)を適用
+          // 🔹 日付の場合は input 用フォーマット(yyyy-mm-dd)を適用
           const value = type === "date"
             ? formatDateForInput(rawValue)
             : rawValue;
@@ -252,7 +262,7 @@ function App() {
             React.createElement("input", {
               type: type,
               value: value,
-              // 🔹 変更：日付タイプの場合は専用のハンドラーでスラッシュに自動逆変換
+              // 🔹 日付タイプの場合は専用のハンドラーでスラッシュに自動逆変換
               onChange: (e) => {
                 if (type === "date") {
                   handleDateChange(h, e.target.value);
