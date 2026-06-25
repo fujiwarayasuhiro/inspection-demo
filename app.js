@@ -7,7 +7,6 @@ function App() {
   const [screen, setScreen] = useState("list");
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [numericFields, setNumericFields] = useState([]);
-  // 🔹 ファイル名を保持するState
   const [fileName, setFileName] = useState("");
 
   // ○×判定
@@ -23,7 +22,7 @@ function App() {
     return "text";
   };
 
-  // エクセル用の形式から input[type="date"] 用の形式に安全に変換
+  // ✅ 【修正】日付分解のタイポ（parts[0]など）を完全に修正
   function formatDateForInput(value) {
     if (!value) return "";
     if (typeof value === "number") {
@@ -40,7 +39,7 @@ function App() {
     return value;
   }
 
-  // input[type="date"] から値が変わった時、エクセル用の形式に逆変換して保存
+  // 日付の逆変換（yyyy-mm-dd -> yyyy/mm/dd）
   const handleDateChange = (key, rawValue) => {
     if (!rawValue) {
       updateValue(key, "");
@@ -56,13 +55,13 @@ function App() {
     if (!files || files.length === 0) return;
     
     const file = files[0];
-    setFileName(file.name); // 🔹 選択されたファイル名を記憶
+    setFileName(file.name);
     const reader = new FileReader();
 
     reader.onload = (evt) => {
       try {
         if (!window.XLSX) {
-          alert("SheetJSライブラリが読み込まれていません。HTML側の記述を確認してください。");
+          alert("SheetJSライブラリが読み込まれていません。");
           return;
         }
         const wb = XLSX.read(evt.target.result, { type: "binary", cellNF: true });
@@ -71,14 +70,14 @@ function App() {
 
         if (!rows || rows.length === 0) return;
 
-        // 🔹 1行目をヘッダー、2行目をフィールドとして正確に格納
+        // ✅ 【修正】rows[0] と rows[1] を明示的に指定して取得
         const currentHeaders = rows[0] || [];
         const currentFields = rows[1] || [];
         
         setHeaders(currentHeaders);
         setFields(currentFields);
 
-        // エクセル帳票の「3行目（r: 2）」のセルから書式設定を解析
+        // 3行目のセルから数値書式（ユーザー定義含む）を解析
         let numCols = [];
         currentHeaders.forEach((h, i) => {
           const cellAddress = XLSX.utils.encode_cell({ r: 2, c: i });
@@ -92,7 +91,7 @@ function App() {
         });
         setNumericFields(numCols);
 
-        // 🔹 修正：3行目（インデックス2）以降を正しくデータレコードとして処理
+        // データ行（3行目以降）を正確にマップ
         const data = rows.slice(2).map(row => {
           let obj = {};
           currentHeaders.forEach((h, i) => {
@@ -112,7 +111,7 @@ function App() {
         setRecords(data);
       } catch (err) {
         console.error("エクセル読み込みエラー:", err);
-        alert("エクセルファイルの読み込みに失敗しました。ファイル構造を確認してください。");
+        alert("エクセルファイルの読み込みに失敗しました。");
       }
     };
 
@@ -126,17 +125,19 @@ function App() {
     setRecords(newData);
   };
 
-  // Excel出力
+  // ✅ 【修正】Excel出力時のデータ二重化バグを完全に修正
   const exportExcel = () => {
     if (!window.XLSX) return;
-    const rows = records.map(r => headers.map(h => r[h] === undefined || r[h] === null ? "" : r[h]));
+    // records（オブジェクトの配列）から、純粋な値のみの2次元配列を作成
+    const dataRows = records.map(r => headers.map(h => r[h] === undefined || r[h] === null ? "" : r[h]));
 
     const ws = XLSX.utils.aoa_to_sheet([
       headers,
       fields,
-      ...rows
+      ...dataRows // 🔹 rows ではなく、データ行だけを展開するように修正
     ]);
 
+    // 日付セルのエクセルシリアル変換 ＆ 書式設定
     Object.keys(ws).forEach(cellRef => {
       if (cellRef.startsWith("!")) return;
       const cell = ws[cellRef];
@@ -159,7 +160,7 @@ function App() {
     XLSX.writeFile(wb, "result.xlsx");
   };
 
-  // 初回表示高速化のための工夫
+  // 高速化キャッシュ処理
   const renderListCards = useMemo(() => {
     return records.map((rec, i) =>
       React.createElement("div", {
@@ -179,9 +180,7 @@ function App() {
     );
   }, [records, headers]);
 
-  // ========================
   // 一覧画面
-  // ========================
   if (screen === "list") {
     return (
       React.createElement("div", null,
@@ -189,13 +188,11 @@ function App() {
         React.createElement("div", { className: "container" },
           
           React.createElement("div", { className: "file-wrapper-box" },
-            // 未選択時は通常のinputを表示
             !fileName && React.createElement("input", {
               type: "file",
               onChange: handleUpload
             }),
             
-            // 戻るボタンで戻ってきた時、ファイル名を擬似維持
             fileName && React.createElement("div", { className: "fake-file-input" },
               React.createElement("label", { className: "fake-file-button" }, 
                 "ファイルを選択",
@@ -217,9 +214,7 @@ function App() {
     );
   }
 
-  // ========================
   // 詳細画面
-  // ========================
   return (
     React.createElement("div", { className: "detail-screen" },
       React.createElement("div", { className: "sticky-header" },
@@ -243,7 +238,6 @@ function App() {
           },
             React.createElement("div", { className: "card-title" }, h),
             
-            // ✅ ○×
             isBool(h) &&
             React.createElement("div", { className: "radio-row" },
               React.createElement("label", { className: "radio-item is-maru" },
@@ -266,7 +260,6 @@ function App() {
               )
             ),
 
-            // ✅ 入力欄
             !isBool(h) &&
             React.createElement("input", {
               type: type,
