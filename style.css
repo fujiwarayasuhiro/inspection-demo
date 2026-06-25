@@ -184,66 +184,44 @@ input[type="date"]:focus {
   background: #0066b3;
 }
 
-/* 📁 ファイルアップロード（戻るを押しても消えないカスタムデザインに刷新） */
-.file-upload-label {
+/* 📁 ファイルアップロード（標準ボタンの見た目を維持し、はみ出しを防ぐ） */
+input[type="file"] {
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 16px;
+  padding: 12px;
   background: #fff;
-  border: 2px dashed #0078d4;
-  border-radius: 12px;
-  text-align: center;
+  border: 1px solid #ccd4dc;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+/* ボタン部分のおしゃれな装飾（以前好評だったファイル選択ボタンのデザイン） */
+input[type="file"]::file-selector-button {
+  background: #e1f0fc;
+  color: #0078d4;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  margin-right: 12px;
   cursor: pointer;
-  margin-bottom: 12px;
   transition: background 0.2s;
 }
 
-.file-upload-label:active {
-  background: #f0f4f8;
+input[type="file"]::file-selector-button:hover {
+  background: #d0e7f9;
 }
 
-/* 本物の無機質なボタンは画面から隠す */
-.file-input-hidden {
-  display: none !important;
-}
-
-.upload-btn-text {
-  color: #0078d4;
-  font-weight: bold;
-  font-size: 15px;
-}
-
-/* 📄 選択中のファイル名表示用バー */
-.file-status-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #fff;
-  padding: 10px 14px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  border: 1px solid #eef2f5;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-}
-
-.file-status-badge {
-  background: #2e7d32;
-  color: white;
-  font-size: 11px;
-  font-weight: bold;
-  padding: 3px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-}
-
+/* 🔹 追加：不要になった赤枠部分のコードは不要なのでCSSから削除されました 🔹 */
+.file-upload-label,
+.file-input-hidden,
+.upload-btn-text,
+.file-status-bar,
+.file-status-badge,
 .file-name-text {
-  font-size: 13px;
-  color: #555;
-  overflow: hidden;
-  text-transform: none;
-  text-overflow: ellipsis; /* ファイル名が長すぎる場合は「...」にする */
-  white-space: nowrap;
+  display: none !important;
 }
 
 /* 📱 スマホ最適化 */
