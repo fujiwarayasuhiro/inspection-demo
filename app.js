@@ -14,30 +14,32 @@ function App() {
   const getInputType = (value) => {
     if (!value) return "text";
 
+    // Excel日付シリアル
     if (typeof value === "number" && value > 40000 && value < 50000) {
       return "date";
     }
 
+    // yyyy/mm
     if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) {
       return "date";
     }
 
-    if (!isNaN(value)) return "number";
+    if (!isNaN(value) && value !== "") return "number";
 
     return "text";
   };
 
-  // 日付表示用変換
+  // 日付表示変換
   function formatDate(value) {
     if (!value) return "";
 
-    // Excelシリアル値
+    // Excelシリアル
     if (typeof value === "number") {
       const date = new Date((value - 25569) * 86400 * 1000);
       return date.toISOString().substring(0, 10);
     }
 
-    // yyyy/mm → yyyy-mm-01
+    // yyyy/mm
     if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) {
       const parts = value.split("/");
       return `${parts[0]}-${parts[1].padStart(2, "0")}-01`;
@@ -46,7 +48,7 @@ function App() {
     return value;
   }
 
-  // Excelアップロード
+  // Excel読込
   const handleUpload = (e) => {
     const file = e.target.files[0];
     const reader = new FileReader();
@@ -71,14 +73,14 @@ function App() {
     reader.readAsBinaryString(file);
   };
 
-  // 値更新
+  // 更新
   const updateValue = (key, value) => {
     const newData = [...records];
     newData[selectedIndex][key] = value;
     setRecords(newData);
   };
 
-  // Excel出力（JUST.DB形式）
+  // Excel出力
   const exportExcel = () => {
     const rows = records.map(r => headers.map(h => r[h] || ""));
 
@@ -94,9 +96,9 @@ function App() {
     XLSX.writeFile(wb, "result.xlsx");
   };
 
-  // =========================
+  // ========================
   // 一覧画面
-  // =========================
+  // ========================
   if (screen === "list") {
     return (
       React.createElement("div", null,
@@ -110,7 +112,7 @@ function App() {
             onChange: handleUpload
           }),
 
-          // ✅ カード（左から4列表示）
+          // 🔹 カード（左から4列）
           records.map((rec, i) =>
             React.createElement("div", {
               key: i,
@@ -128,7 +130,7 @@ function App() {
             )
           ),
 
-          // ✅ ダウンロードボタン（一覧下）
+          // ダウンロード
           records.length > 0 &&
           React.createElement("button", {
             className: "button",
@@ -139,9 +141,9 @@ function App() {
     );
   }
 
-  // =========================
+  // ========================
   // 詳細画面
-  // =========================
+  // ========================
   return (
     React.createElement("div", null,
 
@@ -157,7 +159,9 @@ function App() {
         headers.map((h, i) => {
           const rawValue = records[selectedIndex][h] || "";
           const type = getInputType(rawValue);
-          const value = type === "date" ? formatDate(rawValue) : rawValue;
+          const value = type === "date"
+            ? formatDate(rawValue)
+            : rawValue;
 
           return React.createElement("div", {
             key: i,
@@ -168,34 +172,30 @@ function App() {
               className: "card-title"
             }, h),
 
-            // ✅ ○×（横並び）
+            // ✅ ○×（完全1行固定）
             isBool(h) &&
-            React.createElement("div", {
-              style: {
-                display: "flex",
-                gap: "30px",
-                alignItems: "center"
-              }
-            },
-              React.createElement("label", null,
+            React.createElement("div", { className: "radio-row" },
+
+              React.createElement("label", { className: "radio-item" },
                 React.createElement("input", {
                   type: "radio",
                   checked: rawValue === "○",
                   onChange: () => updateValue(h, "○")
                 }),
-                " ○"
+                React.createElement("span", null, "○")
               ),
-              React.createElement("label", null,
+
+              React.createElement("label", { className: "radio-item" },
                 React.createElement("input", {
                   type: "radio",
                   checked: rawValue === "×",
                   onChange: () => updateValue(h, "×")
                 }),
-                " ×"
+                React.createElement("span", null, "×")
               )
             ),
 
-            // ✅ 入力欄（数値・日付対応）
+            // ✅ 入力欄（はみ出しなし）
             !isBool(h) &&
             React.createElement("input", {
               type: type,
@@ -211,4 +211,3 @@ function App() {
 
 ReactDOM.createRoot(document.getElementById("root"))
   .render(React.createElement(App));
-``
