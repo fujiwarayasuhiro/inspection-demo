@@ -1,18 +1,14 @@
-const { useState, useEffect } = React;
+const { useState } = React;
 
 function App() {
   const [records, setRecords] = useState([]);
   const [headers, setHeaders] = useState([]);
   const [fields, setFields] = useState([]);
+  const [screen, setScreen] = useState("list"); // list or detail
   const [selectedIndex, setSelectedIndex] = useState(null);
 
-  // アップロード処理
-  useEffect(() => {
-    document.getElementById("upload").addEventListener("change", handleUpload);
-    document.getElementById("downloadBtn").addEventListener("click", exportExcel);
-  }, [records]);
-
-  function handleUpload(e) {
+  // Excelアップロード
+  const handleUpload = (e) => {
     const file = e.target.files[0];
     const reader = new FileReader();
 
@@ -21,26 +17,30 @@ function App() {
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
-      const headerRow = rows[0];
-      const fieldRow = rows[1];
-      const dataRows = rows.slice(2);
+      setHeaders(rows[0]);
+      setFields(rows[1]);
 
-      const json = dataRows.map(row => {
+      const data = rows.slice(2).map(row => {
         let obj = {};
-        headerRow.forEach((h, i) => obj[h] = row[i] || "");
+        rows[0].forEach((h, i) => obj[h] = row[i] || "");
         return obj;
       });
 
-      setHeaders(headerRow);
-      setFields(fieldRow);
-      setRecords(json);
+      setRecords(data);
     };
 
     reader.readAsBinaryString(file);
-  }
+  };
+
+  // 更新
+  const updateValue = (key, value) => {
+    const newData = [...records];
+    newData[selectedIndex][key] = value;
+    setRecords(newData);
+  };
 
   // Excel出力
-  function exportExcel() {
+  const exportExcel = () => {
     const rows = records.map(r => headers.map(h => r[h] || ""));
 
     const ws = XLSX.utils.aoa_to_sheet([
@@ -53,27 +53,58 @@ function App() {
     XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
 
     XLSX.writeFile(wb, "result.xlsx");
+  };
+
+  // 一覧画面
+  if (screen === "list") {
+    return (
+      React.createElement("div", null,
+        React.createElement("div", { className: "header" }, "点検一覧"),
+
+        React.createElement("div", { className: "container" },
+
+          React.createElement("input", {
+            type: "file",
+            onChange: handleUpload
+          }),
+
+          records.map((rec, i) =>
+            React.createElement("div", {
+              key: i,
+              className: "card",
+              onClick: () => {
+                setSelectedIndex(i);
+                setScreen("detail");
+              }
+            },
+              React.createElement("div", { className: "card-title" },
+                rec["事業所名"] || "未設定"
+              ),
+              React.createElement("div", null,
+                rec["系統"] || ""
+              ),
+              React.createElement("div", null,
+                rec["室外機(型式)"] || ""
+              )
+            )
+          )
+        )
+      )
+    );
   }
 
+  // 詳細画面
   return (
     React.createElement("div", null,
 
-      // カード一覧
-      records.map((rec, index) => (
-        React.createElement("div", {
-          key: index,
-          className: "card",
-          onClick: () => setSelectedIndex(index)
-        },
-          React.createElement("div", null, "🏢 " + (rec[headers[1]] || "")),
-          React.createElement("div", null, "❄ " + (rec[headers[5]] || ""))
-        )
-      )),
+      React.createElement("div", { className: "header" }, "点検入力"),
 
-      // 詳細入力
-      selectedIndex !== null &&
-      React.createElement("div",
-        React.createElement("h3", null, "点検入力"),
+      React.createElement("div", { className: "container" },
+
+        React.createElement("button", {
+          className: "button",
+          onClick: () => setScreen("list")
+        }, "← 戻る"),
 
         headers.map((h, i) => {
           const value = records[selectedIndex][h] || "";
@@ -82,35 +113,48 @@ function App() {
             key: i,
             className: "card"
           },
-            React.createElement("label", null, h),
+            React.createElement("div", { className: "card-title" }, h),
 
-            // ○×判定
-            h.includes("○") || h.includes("×")
-              ? React.createElement("div", null,
-                  React.createElement("button", {
-                    onClick: () => updateValue(h, "○")
-                  }, "○"),
-                  React.createElement("button", {
-                    onClick: () => updateValue(h, "×")
-                  }, "×"),
-                  React.createElement("div", null, value)
+            // ○×ラジオ
+            (h.includes("○") && h.includes("×")) && (
+              React.createElement("div", { className: "radio-group" },
+                React.createElement("label", null,
+                  React.createElement("input", {
+                    type: "radio",
+                    checked: value === "○",
+                    onChange: () => updateValue(h, "○")
+                  }),
+                  " ○"
+                ),
+                React.createElement("label", null,
+                  React.createElement("input", {
+                    type: "radio",
+                    checked: value === "×",
+                    onChange: () => updateValue(h, "×")
+                  }),
+                  " ×"
                 )
-              : React.createElement("input", {
-                  value: value,
-                  onChange: (e) => updateValue(h, e.target.value)
-                })
+              )
+            ),
+
+            // 通常入力
+            !(h.includes("○") && h.includes("×")) &&
+            React.createElement("input", {
+              value: value,
+              onChange: (e) => updateValue(h, e.target.value)
+            })
           );
-        })
+        }),
+
+        React.createElement("button", {
+          className: "button",
+          onClick: exportExcel
+        }, "Excelダウンロード")
       )
     )
   );
-
-  function updateValue(key, val) {
-    const newData = [...records];
-    newData[selectedIndex][key] = val;
-    setRecords(newData);
-  }
 }
 
 ReactDOM.createRoot(document.getElementById("root"))
   .render(React.createElement(App));
+``
