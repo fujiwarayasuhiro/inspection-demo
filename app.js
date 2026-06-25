@@ -4,10 +4,21 @@ function App() {
   const [records, setRecords] = useState([]);
   const [headers, setHeaders] = useState([]);
   const [fields, setFields] = useState([]);
-  const [screen, setScreen] = useState("list"); // list or detail
+  const [screen, setScreen] = useState("list");
   const [selectedIndex, setSelectedIndex] = useState(null);
 
-  // Excelアップロード
+  // 判定ロジック
+  const isBool = (label) => label.includes("○") && label.includes("×");
+
+  const isReadonly = (value) => value === "－";
+
+  const getInputType = (label, value) => {
+    if (label.includes("日") || label.includes("年月")) return "date";
+    if (!isNaN(value) && value !== "") return "number";
+    return "text";
+  };
+
+  // Excel読込
   const handleUpload = (e) => {
     const file = e.target.files[0];
     const reader = new FileReader();
@@ -59,6 +70,7 @@ function App() {
   if (screen === "list") {
     return (
       React.createElement("div", null,
+
         React.createElement("div", { className: "header" }, "点検一覧"),
 
         React.createElement("div", { className: "container" },
@@ -80,14 +92,17 @@ function App() {
               React.createElement("div", { className: "card-title" },
                 rec["事業所名"] || "未設定"
               ),
-              React.createElement("div", null,
-                rec["系統"] || ""
-              ),
-              React.createElement("div", null,
-                rec["室外機(型式)"] || ""
-              )
+              React.createElement("div", null, rec["系統"] || ""),
+              React.createElement("div", null, rec["室外機(型式)"] || "")
             )
-          )
+          ),
+
+          // ✅ ① ダウンロードボタン下部に配置
+          records.length > 0 &&
+          React.createElement("button", {
+            className: "button",
+            onClick: exportExcel
+          }, "Excelダウンロード")
         )
       )
     );
@@ -108,6 +123,8 @@ function App() {
 
         headers.map((h, i) => {
           const value = records[selectedIndex][h] || "";
+          const readonly = isReadonly(value);
+          const type = getInputType(h, value);
 
           return React.createElement("div", {
             key: i,
@@ -115,41 +132,39 @@ function App() {
           },
             React.createElement("div", { className: "card-title" }, h),
 
-            // ○×ラジオ
-            (h.includes("○") && h.includes("×")) && (
-              React.createElement("div", { className: "radio-group" },
-                React.createElement("label", null,
-                  React.createElement("input", {
-                    type: "radio",
-                    checked: value === "○",
-                    onChange: () => updateValue(h, "○")
-                  }),
-                  " ○"
-                ),
-                React.createElement("label", null,
-                  React.createElement("input", {
-                    type: "radio",
-                    checked: value === "×",
-                    onChange: () => updateValue(h, "×")
-                  }),
-                  " ×"
-                )
+            // ✅ ラジオボタン（③ 値表示なし）
+            isBool(h) &&
+            React.createElement("div", { className: "radio-group" },
+              React.createElement("label", null,
+                React.createElement("input", {
+                  type: "radio",
+                  checked: value === "○",
+                  disabled: readonly,
+                  onChange: () => updateValue(h, "○")
+                }),
+                " ○"
+              ),
+              React.createElement("label", null,
+                React.createElement("input", {
+                  type: "radio",
+                  checked: value === "×",
+                  disabled: readonly,
+                  onChange: () => updateValue(h, "×")
+                }),
+                " ×"
               )
             ),
 
-            // 通常入力
-            !(h.includes("○") && h.includes("×")) &&
+            // ✅ 入力フィールド（④ 型対応＋② readonly）
+            !isBool(h) &&
             React.createElement("input", {
+              type: type,
               value: value,
+              readOnly: readonly,
               onChange: (e) => updateValue(h, e.target.value)
             })
           );
-        }),
-
-        React.createElement("button", {
-          className: "button",
-          onClick: exportExcel
-        }, "Excelダウンロード")
+        })
       )
     )
   );
@@ -157,4 +172,3 @@ function App() {
 
 ReactDOM.createRoot(document.getElementById("root"))
   .render(React.createElement(App));
-``
