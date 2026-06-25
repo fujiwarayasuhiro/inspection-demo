@@ -29,7 +29,7 @@ function App() {
     return "text";
   };
 
-  // 🔹 エクセル用の形式（yyyy/mm/dd）から input[type="date"] 用の形式（yyyy-mm-dd）に安全に変換
+  // エクセル用の形式（yyyy/mm/dd）から input[type="date"] 用の形式（yyyy-mm-dd）に安全に変換
   function formatDateForInput(value) {
     if (!value) return "";
 
@@ -43,21 +43,20 @@ function App() {
     if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) {
       const parts = value.split("/");
       const y = parts[0];
-      const m = parts[1].padStart(2, "0");
-      const d = parts[2] ? parts[2].padStart(2, "0") : "01";
+      const m = (parts[1] || "").padStart(2, "0");
+      const d = (parts[2] || "").padStart(2, "0");
       return `${y}-${m}-${d}`;
     }
 
     return value;
   }
 
-  // 🔹 input[type="date"] から値が変わった時、エクセル用の「yyyy/mm/dd」に逆変換して保存
+  // input[type="date"] から値が変わった時、エクセル用の「yyyy/mm/dd」に逆変換して保存
   const handleDateChange = (key, rawValue) => {
     if (!rawValue) {
       updateValue(key, "");
       return;
     }
-    // yyyy-mm-dd -> yyyy/mm/dd
     const formatted = rawValue.replace(/-/g, "/");
     updateValue(key, formatted);
   };
@@ -71,38 +70,42 @@ function App() {
     const reader = new FileReader();
 
     reader.onload = (evt) => {
-      const wb = XLSX.read(evt.target.result, { type: "binary" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      try {
+        const wb = XLSX.read(evt.target.result, { type: "binary" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
-      if (!rows || rows.length === 0) return;
+        if (!rows || rows.length === 0) return;
 
-      // 🔹 修正: 行全体ではなく、1行目をヘッダー、2行目をフィールドとして正しく切り出す
-      const currentHeaders = rows[0] || [];
-      const currentFields = rows[1] || [];
-      
-      setHeaders(currentHeaders);
-      setFields(currentFields);
+        const currentHeaders = rows[0] || [];
+        const currentFields = rows[1] || [];
+        
+        setHeaders(currentHeaders);
+        setFields(currentFields);
 
-      // 3行目（インデックス2）以降を実際のレコード（データ）として読み込む
-      const data = rows.slice(2).map(row => {
-        let obj = {};
-        currentHeaders.forEach((h, i) => {
-          let val = row[i] === undefined || row[i] === null ? "" : row[i];
-          // 読み込み時に日付シリアル値があれば、一旦 yyyy/mm/dd 文字列に直して保持しておく
-          if (typeof val === "number" && val > 40000 && val < 50000) {
-            const date = new Date((val - 25569) * 86400 * 1000);
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, "0");
-            const d = String(date.getDate()).padStart(2, "0");
-            val = `${y}/${m}/${d}`;
-          }
-          obj[h] = val;
+        // 3行目以降をレコードとして処理
+        const data = rows.slice(2).map(row => {
+          let obj = {};
+          currentHeaders.forEach((h, i) => {
+            let val = row[i] === undefined || row[i] === null ? "" : row[i];
+            // 読み込み時に日付シリアル値があれば、yyyy/mm/dd 文字列に直しておく
+            if (typeof val === "number" && val > 40000 && val < 50000) {
+              const date = new Date((val - 25569) * 86400 * 1000);
+              const y = date.getFullYear();
+              const m = String(date.getMonth() + 1).padStart(2, "0");
+              const d = String(date.getDate()).padStart(2, "0");
+              val = `${y}/${m}/${d}`;
+            }
+            obj[h] = val;
+          });
+          return obj;
         });
-        return obj;
-      });
 
-      setRecords(data);
+        setRecords(data);
+      } catch (err) {
+        console.error("エクセル読み込みエラー:", err);
+        alert("エクセルファイルの読み込みに失敗しました。ファイル構造を確認してください。");
+      }
     };
 
     reader.readAsBinaryString(file);
@@ -115,7 +118,7 @@ function App() {
     setRecords(newData);
   };
 
-  // 🔹 Excel出力（日付フォーマットの適用）
+  // Excel出力（日付フォーマットの適用）
   const exportExcel = () => {
     const rows = records.map(r => headers.map(h => r[h] === undefined || r[h] === null ? "" : r[h]));
 
@@ -125,7 +128,7 @@ function App() {
       ...rows
     ]);
 
-    // シート内の全セルをスキャンし、日付文字列（yyyy/mm/dd）をエクセルの「シリアル値＋日付書式」に置換
+    // 日付文字列（yyyy/mm/dd）をエクセルのシリアル値＋日付書式に置換
     Object.keys(ws).forEach(cellRef => {
       if (cellRef.startsWith("!")) return;
       const cell = ws[cellRef];
@@ -134,18 +137,17 @@ function App() {
         const parts = cell.v.split("/");
         const dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
         
-        // エクセルのシリアル値に計算し直す
-        const excelSerial = (dateObj.getTime() / (86400 * 1000)) + 25569;
-        
-        cell.t = "n"; // タイプを数値(number)に変更
-        cell.v = excelSerial; // 値をシリアル値に変更
-        cell.z = "yyyy/mm/dd"; // エクセル上の表示形式を固定指定
+        if (!isNaN(dateObj.getTime())) {
+          const excelSerial = (dateObj.getTime() / (86400 * 1000)) + 25569;
+          cell.t = "n"; 
+          cell.v = excelSerial; 
+          cell.z = "yyyy/mm/dd"; 
+        }
       }
     });
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-
     XLSX.writeFile(wb, "result.xlsx");
   };
 
@@ -155,17 +157,12 @@ function App() {
   if (screen === "list") {
     return (
       React.createElement("div", null,
-
         React.createElement("div", { className: "header" }, "点検一覧"),
-
         React.createElement("div", { className: "container" },
-
           React.createElement("input", {
             type: "file",
             onChange: handleUpload
           }),
-
-          // 🔹 カード（左から4列）
           records.map((rec, i) =>
             React.createElement("div", {
               key: i,
@@ -182,8 +179,6 @@ function App() {
               )
             )
           ),
-
-          // ダウンロード
           records.length > 0 &&
           React.createElement("button", {
             className: "button",
@@ -199,8 +194,6 @@ function App() {
   // ========================
   return (
     React.createElement("div", { className: "detail-screen" },
-
-      // ✅ 画面上部にスクロール固定されるヘッダーエリア
       React.createElement("div", { className: "sticky-header" },
         React.createElement("div", { className: "header" }, "点検入力"),
         React.createElement("div", { className: "action-bar" },
@@ -210,32 +203,21 @@ function App() {
           }, "← 戻る")
         )
       ),
-
-      // ✅ 下部にスクロールするカードコンテンツ
       React.createElement("div", { className: "container" },
-
         headers.map((h, i) => {
           const rawValue = records[selectedIndex][h] === undefined || records[selectedIndex][h] === null ? "" : records[selectedIndex][h];
           const type = getInputType(rawValue);
-          
-          // 🔹 日付の場合は input 用フォーマット(yyyy-mm-dd)を適用
-          const value = type === "date"
-            ? formatDateForInput(rawValue)
-            : rawValue;
+          const value = type === "date" ? formatDateForInput(rawValue) : rawValue;
 
           return React.createElement("div", {
             key: i,
             className: "card"
           },
-
-            React.createElement("div", {
-              className: "card-title"
-            }, h),
-
-            // ✅ ○×（完全1行固定）
+            React.createElement("div", { className: "card-title" }, h),
+            
+            // ✅ ○×
             isBool(h) &&
             React.createElement("div", { className: "radio-row" },
-
               React.createElement("label", { className: "radio-item is-maru" },
                 React.createElement("input", {
                   type: "radio",
@@ -245,7 +227,6 @@ function App() {
                 }),
                 React.createElement("span", null, "○")
               ),
-
               React.createElement("label", { className: "radio-item is-batsu" },
                 React.createElement("input", {
                   type: "radio",
@@ -257,12 +238,11 @@ function App() {
               )
             ),
 
-            // ✅ 入力欄（はみ出しなし）
+            // ✅ 入力欄
             !isBool(h) &&
             React.createElement("input", {
               type: type,
               value: value,
-              // 🔹 日付タイプの場合は専用のハンドラーでスラッシュに自動逆変換
               onChange: (e) => {
                 if (type === "date") {
                   handleDateChange(h, e.target.value);
