@@ -52,22 +52,23 @@ function App() {
 
   // Excel読込
   const handleUpload = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files[0]; // 🔹 複数ファイル選択エラー防止のため [0] に修正
     const reader = new FileReader();
 
     reader.onload = (evt) => {
       const wb = XLSX.read(evt.target.result, { type: "binary" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
+      const ws = wb.Sheets[wb.SheetNames[0]]; // 🔹 シート名インデックスを明示指定
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
       const currentHeaders = rows[0] || [];
       setHeaders(currentHeaders);
       setFields(rows[1] || []);
 
-      // ✅ セルの保護情報を読み取る
+      // ✅ 【修正】エクセル帳票の「3行目（r: 2）」のセルから保護情報を読み取る
       let lockedCols = [];
       currentHeaders.forEach((h, i) => {
-        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: i });
+        // r: 2 がエクセルの3行目を指します（0始まりのため 0=1行目, 1=2行目, 2=3行目）
+        const cellAddress = XLSX.utils.encode_cell({ r: 2, c: i });
         const cell = ws[cellAddress];
         
         // 書式設定で「ロック」のチェックが外されていない（＝保護対象である）項目を特定
