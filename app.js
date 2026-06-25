@@ -44,7 +44,7 @@ function App() {
       const parts = value.split("/");
       const y = parts[0];
       const m = (parts[1] || "").padStart(2, "0");
-      const d = (parts[2] || "").padStart(2, "0");
+      const d = (parts[2] || "01").padStart(2, "0");
       return `${y}-${m}-${d}`;
     }
 
@@ -118,7 +118,7 @@ function App() {
     setRecords(newData);
   };
 
-  // Excel出力（日付フォーマットの適用）
+  // ✅ 修正：時差バグを防止したExcel出力処理
   const exportExcel = () => {
     const rows = records.map(r => headers.map(h => r[h] === undefined || r[h] === null ? "" : r[h]));
 
@@ -135,12 +135,19 @@ function App() {
       
       if (cell && cell.v && typeof cell.v === "string" && cell.v.match(/^\d{4}\/\d{1,2}\/\d{1,2}/)) {
         const parts = cell.v.split("/");
-        const dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        const year = Number(parts[0]);
+        const month = Number(parts[1]);
+        const day = Number(parts[2]);
+        
+        // 🔹 時差（UTC）の影響を受けないように、ローカルの時刻（昼の12時）としてDateオブジェクトを作成
+        const dateObj = new Date(year, month - 1, day, 12, 0, 0);
         
         if (!isNaN(dateObj.getTime())) {
+          // エクセルのシリアル基準日に合わせた変換
           const excelSerial = (dateObj.getTime() / (86400 * 1000)) + 25569;
+          
           cell.t = "n"; 
-          cell.v = excelSerial; 
+          cell.v = Math.floor(excelSerial); // 🔹 小数点を切り捨てて確実に該当日に固定
           cell.z = "yyyy/mm/dd"; 
         }
       }
@@ -177,8 +184,7 @@ function App() {
                   String(rec[h] || "")
                 )
               )
-            )
-          ),
+            ),
           records.length > 0 &&
           React.createElement("button", {
             className: "button",
