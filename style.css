@@ -43,23 +43,23 @@ body {
   box-sizing: border-box;
 }
 
-/* 🔙 戻るボタンのデザイン（シンプルかつ押しやすく） */
+/* 🔙 戻るボタンのデザイン（ファイル選択と同じテイストに統一） */
 .button-back {
   display: inline-block;
   padding: 8px 16px;
   font-size: 14px;
   font-weight: bold;
-  color: #444;
-  background: white;
-  border: 1px solid #ccd4dc;
+  color: #0078d4;         /* 🔹 ファイル選択と同じ濃い青文字 */
+  background: #e1f0fc;    /* 🔹 ファイル選択と同じ淡い青背景 */
+  border: 1px solid transparent; /* 枠線を消してスッキリ */
   border-radius: 6px;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 120, 212, 0.1); /* ほんのり青い影 */
   transition: all 0.2s;
 }
 
 .button-back:active {
-  background: #f0f2f5;
+  background: #d0e7f9;    /* 🔹 タップした時は少し濃い青に */
   transform: translateY(1px);
 }
 
