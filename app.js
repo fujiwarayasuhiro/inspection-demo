@@ -9,8 +9,6 @@ function App() {
 
   const isBool = (label) => label.includes("○") && label.includes("×");
 
-  const isReadonly = (value) => value === "－";
-
   const getInputType = (value) => {
     if (!value) return "text";
 
@@ -121,3 +119,55 @@ function App() {
 
         React.createElement("button", {
           className: "button",
+          onClick: () => setScreen("list")
+        }, "← 戻る"),
+
+        headers.map((h, i) => {
+          const value = records[selectedIndex][h] || "";
+          const type = getInputType(value);
+
+          return React.createElement("div", {
+            key: i,
+            className: "card"
+          },
+            React.createElement("div", { className: "card-title" }, h),
+
+            // ラジオ横並び
+            isBool(h) &&
+            React.createElement("div", {
+              style: { display: "flex", gap: "30px" }
+            },
+              React.createElement("label", null,
+                React.createElement("input", {
+                  type: "radio",
+                  checked: value === "○",
+                  onChange: () => updateValue(h, "○")
+                }),
+                " ○"
+              ),
+              React.createElement("label", null,
+                React.createElement("input", {
+                  type: "radio",
+                  checked: value === "×",
+                  onChange: () => updateValue(h, "×")
+                }),
+                " ×"
+              )
+            ),
+
+            // 入力
+            !isBool(h) &&
+            React.createElement("input", {
+              type: type,
+              value: value,
+              onChange: (e) => updateValue(h, e.target.value)
+            })
+          );
+        })
+      )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root"))
+  .render(React.createElement(App));
