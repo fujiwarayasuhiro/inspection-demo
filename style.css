@@ -9,7 +9,6 @@ body {
   color: white;
   padding: 15px;
   text-align: center;
-  font-size: 18px;
 }
 
 .container {
@@ -21,10 +20,10 @@ body {
 .card {
   background: white;
   border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  overflow: hidden; /* ✅ はみ出し防止 */
+  overflow: hidden;
 }
 
 .card-title {
@@ -33,65 +32,49 @@ body {
   font-size: 14px;
 }
 
-.button {
-  width: 100%;
-  padding: 14px;
-  font-size: 16px;
-  border: none;
-  border-radius: 10px;
-  background: #0078d4;
-  color: white;
-  margin-top: 12px;
-}
-
-/* ✅ 入力欄はみ出し防止（重要） */
+/* ✅ 入力欄崩れ防止（最重要） */
 input {
   width: 100%;
-  box-sizing: border-box; /* ✅ これが超重要 */
+  box-sizing: border-box;
   padding: 10px;
   font-size: 16px;
   margin-top: 5px;
 }
 
-/* ✅ ラジオを1行固定 */
-.radio-group {
+/* ✅ ラジオ完全固定 */
+.radio-row {
   display: flex;
-  flex-direction: row;        /* ✅ 横並び固定 */
-  gap: 20px;
-  align-items: center;
-  flex-wrap: nowrap;          /* ✅ 折り返し禁止 */
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 30px;
+  width: 100%;
 }
 
-.radio-group label {
+/* ✅ ラジオ1つ */
+.radio-item {
   display: flex;
   align-items: center;
-  white-space: nowrap;        /* ✅ 改行防止 */
-  gap: 4px;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-/* ✅ スマホ最適化 */
+/* ✅ スマホでも崩れない */
 @media (max-width: 480px) {
+
   .container {
     padding: 8px;
   }
 
   .card {
-    padding: 12px;
+    padding: 10px;
   }
 
-  .card-title {
-    font-size: 13px;
+  .radio-row {
+    gap: 24px;
   }
 
   input {
     font-size: 16px;
-  }
-
-  .button {
-    font-size: 16px;
-  }
-
-  .radio-group {
-    gap: 16px;
   }
 }
