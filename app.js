@@ -145,16 +145,21 @@ function App() {
   // 詳細画面
   // ========================
   return (
-    React.createElement("div", null,
+    React.createElement("div", { className: "detail-screen" }, // 🔹 全体を包むクラスを追加
 
-      React.createElement("div", { className: "header" }, "点検入力"),
+      // 🔹 ヘッダーと戻るボタンを固定するエリア
+      React.createElement("div", { className: "sticky-header" },
+        React.createElement("div", { className: "header" }, "点検入力"),
+        React.createElement("div", { className: "action-bar" },
+          React.createElement("button", {
+            className: "button-back", // 🔹 戻るボタン専用のクラス
+            onClick: () => setScreen("list")
+          }, "← 戻る")
+        )
+      ),
 
-      React.createElement("div", { className: "container" },
-
-        React.createElement("button", {
-          className: "button",
-          onClick: () => setScreen("list")
-        }, "← 戻る"),
+      // 🔹 スクロールする中身のエリア
+      React.createElement("div", { className: "container scroll-content" },
 
         headers.map((h, i) => {
           const rawValue = records[selectedIndex][h] || "";
@@ -175,21 +180,21 @@ function App() {
             // ✅ ○×（完全1行固定）
             isBool(h) &&
             React.createElement("div", { className: "radio-row" },
-            
-              React.createElement("label", { className: "radio-item" },
+
+              React.createElement("label", { className: "radio-item is-maru" }, // 🔹 ○専用クラス
                 React.createElement("input", {
                   type: "radio",
-                  name: h, // 🔹 項目ごとに独立させるため name 属性を追加
+                  name: h,
                   checked: rawValue === "○",
                   onChange: () => updateValue(h, "○")
                 }),
                 React.createElement("span", null, "○")
               ),
-            
-              React.createElement("label", { className: "radio-item" },
+
+              React.createElement("label", { className: "radio-item is-batsu" }, // 🔹 ×専用クラス
                 React.createElement("input", {
                   type: "radio",
-                  name: h, // 🔹 項目ごとに独立させるため name 属性を追加
+                  name: h,
                   checked: rawValue === "×",
                   onChange: () => updateValue(h, "×")
                 }),
