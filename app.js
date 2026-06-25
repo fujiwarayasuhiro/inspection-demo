@@ -7,7 +7,7 @@ function App() {
   const [screen, setScreen] = useState("list");
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [numericFields, setNumericFields] = useState([]);
-  // 🔹 ファイル名を安全に保持するState
+  // 🔹 ファイル名を保持するState
   const [fileName, setFileName] = useState("");
 
   // ○×判定
@@ -23,7 +23,7 @@ function App() {
     return "text";
   };
 
-  // エクセル用の形式から input[type="date"] 用の形式に変換
+  // エクセル用の形式から input[type="date"] 用の形式に安全に変換
   function formatDateForInput(value) {
     if (!value) return "";
     if (typeof value === "number") {
@@ -32,9 +32,9 @@ function App() {
     }
     if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) {
       const parts = value.split("/");
-      const y = parts;
-      const m = (parts || "").padStart(2, "0");
-      const d = (parts || "01").padStart(2, "0");
+      const y = parts[0];
+      const m = (parts[1] || "").padStart(2, "0");
+      const d = (parts[2] || "01").padStart(2, "0");
       return `${y}-${m}-${d}`;
     }
     return value;
@@ -55,7 +55,7 @@ function App() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
-    const file = files;
+    const file = files[0];
     setFileName(file.name); // 🔹 選択されたファイル名を記憶
     const reader = new FileReader();
 
@@ -66,17 +66,19 @@ function App() {
           return;
         }
         const wb = XLSX.read(evt.target.result, { type: "binary", cellNF: true });
-        const ws = wb.Sheets[wb.SheetNames];
+        const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
         if (!rows || rows.length === 0) return;
 
-        const currentHeaders = rows || [];
-        const currentFields = rows || [];
+        // 🔹 1行目をヘッダー、2行目をフィールドとして正確に格納
+        const currentHeaders = rows[0] || [];
+        const currentFields = rows[1] || [];
         
         setHeaders(currentHeaders);
         setFields(currentFields);
 
+        // エクセル帳票の「3行目（r: 2）」のセルから書式設定を解析
         let numCols = [];
         currentHeaders.forEach((h, i) => {
           const cellAddress = XLSX.utils.encode_cell({ r: 2, c: i });
@@ -90,6 +92,7 @@ function App() {
         });
         setNumericFields(numCols);
 
+        // 🔹 修正：3行目（インデックス2）以降を正しくデータレコードとして処理
         const data = rows.slice(2).map(row => {
           let obj = {};
           currentHeaders.forEach((h, i) => {
@@ -139,9 +142,9 @@ function App() {
       const cell = ws[cellRef];
       if (cell && cell.v && typeof cell.v === "string" && cell.v.match(/^\d{4}\/\d{1,2}\/\d{1,2}/)) {
         const parts = cell.v.split("/");
-        const year = Number(parts);
-        const month = Number(parts);
-        const day = Number(parts);
+        const year = Number(parts[0]);
+        const month = Number(parts[1]);
+        const day = Number(parts[2]);
         const dateObj = new Date(year, month - 1, day, 12, 0, 0);
         if (!isNaN(dateObj.getTime())) {
           cell.t = "n"; 
@@ -185,7 +188,6 @@ function App() {
         React.createElement("div", { className: "header" }, "点検一覧"),
         React.createElement("div", { className: "container" },
           
-          // 🔹 修正：不要な赤枠ラベルを完全撤去。通常の使い慣れた file 入力欄を復活
           React.createElement("div", { className: "file-wrapper-box" },
             // 未選択時は通常のinputを表示
             !fileName && React.createElement("input", {
@@ -193,7 +195,7 @@ function App() {
               onChange: handleUpload
             }),
             
-            // 🔹 戻るボタンで戻ってきた時、ファイル名が消えないように「偽装ボタン」を表示してファイル名を維持
+            // 戻るボタンで戻ってきた時、ファイル名を擬似維持
             fileName && React.createElement("div", { className: "fake-file-input" },
               React.createElement("label", { className: "fake-file-button" }, 
                 "ファイルを選択",
@@ -241,6 +243,7 @@ function App() {
           },
             React.createElement("div", { className: "card-title" }, h),
             
+            // ✅ ○×
             isBool(h) &&
             React.createElement("div", { className: "radio-row" },
               React.createElement("label", { className: "radio-item is-maru" },
@@ -263,6 +266,7 @@ function App() {
               )
             ),
 
+            // ✅ 入力欄
             !isBool(h) &&
             React.createElement("input", {
               type: type,
