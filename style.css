@@ -184,17 +184,16 @@ input[type="date"]:focus {
   background: #0066b3;
 }
 
-/* 📁 本物のファイルアップロード（外枠の点線デザイン） */
+/* 📁 ファイルアップロード（点線デザイン） */
 .file-wrapper-box {
   background: #fff;
-  border: 1px dashed #ccd4dc; /* 画像の上側と同じ点線外枠 */
+  border: 1px dashed #ccd4dc; 
   border-radius: 12px;
   padding: 14px;
   margin-bottom: 16px;
   box-sizing: border-box;
 }
 
-/* 標準のinputファイル形式の見た目指定 */
 input[type="file"] {
   width: 100%;
   font-size: 14px;
@@ -212,7 +211,7 @@ input[type="file"]::file-selector-button {
   cursor: pointer;
 }
 
-/* 🔙 「戻る」で表示される、消えないファイル表示枠のスタイル（本物と見た目を完全一致） */
+/* 🔙 「戻る」で表示される、消えないファイル表示枠 */
 .fake-file-input {
   display: flex;
   align-items: center;
