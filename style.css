@@ -184,20 +184,23 @@ input[type="date"]:focus {
   background: #0066b3;
 }
 
-/* 📁 ファイルアップロード（標準ボタンの見た目を維持し、はみ出しを防ぐ） */
-input[type="file"] {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px;
+/* 📁 本物のファイルアップロード（外枠の点線デザイン） */
+.file-wrapper-box {
   background: #fff;
-  border: 1px solid #ccd4dc;
-  border-radius: 8px;
+  border: 1px dashed #ccd4dc; /* 画像の上側と同じ点線外枠 */
+  border-radius: 12px;
+  padding: 14px;
   margin-bottom: 16px;
-  font-size: 14px;
+  box-sizing: border-box;
 }
 
-/* ボタン部分のおしゃれな装飾（以前好評だったファイル選択ボタンのデザイン） */
+/* 標準のinputファイル形式の見た目指定 */
+input[type="file"] {
+  width: 100%;
+  font-size: 14px;
+  color: #555;
+}
+
 input[type="file"]::file-selector-button {
   background: #e1f0fc;
   color: #0078d4;
@@ -207,21 +210,35 @@ input[type="file"]::file-selector-button {
   font-weight: bold;
   margin-right: 12px;
   cursor: pointer;
-  transition: background 0.2s;
 }
 
-input[type="file"]::file-selector-button:hover {
-  background: #d0e7f9;
+/* 🔙 「戻る」で表示される、消えないファイル表示枠のスタイル（本物と見た目を完全一致） */
+.fake-file-input {
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
 
-/* 🔹 追加：不要になった赤枠部分のコードは不要なのでCSSから削除されました 🔹 */
-.file-upload-label,
-.file-input-hidden,
-.upload-btn-text,
-.file-status-bar,
-.file-status-badge,
-.file-name-text {
-  display: none !important;
+.fake-file-button {
+  background: #e1f0fc;
+  color: #0078d4;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 6px;
+  margin-right: 12px;
+  cursor: pointer;
+  user-select: none;
+  display: inline-block;
+}
+
+.fake-file-text {
+  font-size: 14px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
 }
 
 /* 📱 スマホ最適化 */
@@ -249,21 +266,4 @@ input[type="file"]::file-selector-button:hover {
     padding: 10px;
     font-size: 16px;
   }
-}
-
-/* ⏳ 読み込み中（ローディング）の演出スタイル */
-.loading-overlay {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.75);
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 14px;
-  z-index: 999;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  pointer-events: none; /* 背後の操作を一時ブロック */
 }
