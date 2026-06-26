@@ -184,7 +184,7 @@ function App() {
   if (screen === "list") {
     return (
       React.createElement("div", null,
-        React.createElement("div", { className: "header" }, "点検一覧"),
+        React.createElement("div", { className: "header" }, "点検入力アプリ"),
         React.createElement("div", { className: "container" },
           
           React.createElement("div", { className: "file-wrapper-box" },
@@ -218,7 +218,7 @@ function App() {
   return (
     React.createElement("div", { className: "detail-screen" },
       React.createElement("div", { className: "sticky-header" },
-        React.createElement("div", { className: "header" }, "点検入力"),
+        React.createElement("div", { className: "header" }, "点検詳細入力"),
         React.createElement("div", { className: "action-bar" },
           React.createElement("button", {
             className: "button-back",
