@@ -22,7 +22,9 @@ function App() {
     if (!value) return "text";
     if (typeof value === "number" && value > 40000 && value < 50000) return "date";
     if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) return "date";
-    if (!isNaN(value) && value !== "") return "number";
+    // 💡修正後：完全に半角数字（またはマイナス・小数）のみの文字列の時だけ number にする
+    if (typeof value === "number" || (typeof value === "string" && /^-?\d+(\.\d+)?$/.test(value))) return "number";
+
     return "text";
   };
 
