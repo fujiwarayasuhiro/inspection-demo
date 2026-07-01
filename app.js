@@ -17,22 +17,22 @@ function App() {
   const getInputType = (headerName, value) => {
     // 💡日付書式の列なら、空欄でも最優先で date にする
     if (dateFields.includes(headerName)) return "date";
-    
+
     // 💡修正（位置を上に移動）：数値書式の列なら、空欄であっても最優先で number にする
     if (numericFields.includes(headerName)) return "number";
-    
+
     // 💡空欄チェックの順番を下げます
     if (!value) return "text";
-    
+
     if (typeof value === "number" && value > 40000 && value < 50000) return "date";
     if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) return "date";
-    
+
     // 完全に半角数字（またはマイナス・小数）のみの文字列の時だけ number にする
     if (typeof value === "number" || (typeof value === "string" && /^-?\d+(\.\d+)?$/.test(value))) return "number";
 
     return "text";
   };
-  
+
   // ✅ 【修正】日付分解のタイポ（parts[0]など）を完全に修正
   function formatDateForInput(value) {
     if (!value) return "";
@@ -64,7 +64,7 @@ function App() {
   const handleUpload = (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    
+
     const file = files[0];
     setFileName(file.name);
     const reader = new FileReader();
@@ -75,6 +75,7 @@ function App() {
           alert("SheetJSライブラリが読み込まれていません。");
           return;
         }
+        const wb = XLSX.read(evt.target.result, { type: "binary", cellNF: true });
         const wb = XLSX.read(evt.target.result, { type: "binary", cellNF: true, sheetStubs: true });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
@@ -84,44 +85,31 @@ function App() {
         // ✅ 【修正】rows[0] と rows[1] を明示的に指定して取得
         const currentHeaders = rows[0] || [];
         const currentFields = rows[1] || [];
-        
+
         setHeaders(currentHeaders);
         setFields(currentFields);
 
         // 3行目のセルから数値書式（ユーザー定義含む）を解析
         let numCols = [];
-        let dateCols = [];
+        let dateCols = []; // 💡追加
         currentHeaders.forEach((h, i) => {
           const cellAddress = XLSX.utils.encode_cell({ r: 2, c: i });
           const cell = ws[cellAddress];
-          
-          // 💡修正：cell が存在しない（完全に空）場合や、cell.z がない場合も想定してデフォルトを設定
-          if (cell) {
-            // 書式設定（cell.z）がない場合は、セルの型（cell.t）が数値（'n'）かどうか、または標準設定かをみる
-            const formatStr = cell.z ? String(cell.z).toLowerCase() : "general";
-            const cellType = cell.t || "";
-
-            // 通常の数値（0や#）、内部書式名（general）、またはセルの型が数値（'n'）の場合
-            const hasNumberFormat = formatStr.includes("0") || formatStr.includes("#") || formatStr === "general" || cellType === "n";
+          if (cell && cell.z) {
+            const formatStr = String(cell.z).toLowerCase();
+            const hasNumberFormat = formatStr.includes("0") || formatStr.includes("#");
             const isNotDate = !formatStr.includes("y") && !formatStr.includes("m") && !formatStr.includes("d");
-            
-            if (hasNumberFormat && isNotDate) {
-              numCols.push(h);
-            }
+            if (hasNumberFormat && isNotDate) numCols.push(h);
 
-            // 日付列の判定
-            const isRealDate = (formatStr.includes("y") || formatStr.includes("m") || formatStr.includes("d")) && !(formatStr.includes("0") || formatStr.includes("#"));
+            // 💡判定を厳格に修正：y, m, dを含み、かつ純粋な数値書式（0や#）を含まない場合のみ日付列とする
+            const isRealDate = (formatStr.includes("y") || formatStr.includes("m") || formatStr.includes("d")) && !hasNumberFormat;
             if (isRealDate) {
               dateCols.push(h);
             }
-          } else {
-            // 💡追加：3行目のセル自体が完全に空（undefined）で書式が取れない場合の安全策
-            // 通常、何も入力したことがないデフォルトのセルは数値でもテキストでも「標準（general）」として扱われます
-            numCols.push(h); 
           }
         });
         setNumericFields(numCols);
-        setDateFields(dateCols);
+        setDateFields(dateCols); // 💡追加
 
         // データ行（3行目以降）を正確にマップ
         const data = rows.slice(2).map(row => {
@@ -218,13 +206,13 @@ function App() {
       React.createElement("div", null,
         React.createElement("div", { className: "header" }, "点検入力アプリ"),
         React.createElement("div", { className: "container" },
-          
+
           React.createElement("div", { className: "file-wrapper-box" },
             !fileName && React.createElement("input", {
               type: "file",
               onChange: handleUpload
             }),
-            
+
             fileName && React.createElement("div", { className: "fake-file-input" },
               React.createElement("label", { className: "fake-file-button" }, 
                 "ファイルを選択",
@@ -235,7 +223,7 @@ function App() {
           ),
 
           renderListCards,
-          
+
           records.length > 0 &&
           React.createElement("button", {
             className: "button",
@@ -269,7 +257,7 @@ function App() {
             className: "card"
           },
             React.createElement("div", { className: "card-title" }, h),
-            
+
             isBool(h) &&
             React.createElement("div", { className: "radio-row" },
               React.createElement("label", { className: "radio-item is-maru" },
