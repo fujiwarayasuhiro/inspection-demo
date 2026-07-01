@@ -266,3 +266,29 @@ input[type="file"]::file-selector-button {
     font-size: 16px;
   }
 }
+
+/* 日付入力欄のiPhoneでの表示崩れ対策 */
+input[type="date"] {
+    /* iOS固有のスタイルを無効化 */
+    -webkit-appearance: none;
+    appearance: none;
+    
+    /* 横幅の計算にパディングとボーダーを含める（はみ出し防止） */
+    box-sizing: border-box; 
+    
+    /* 文字やアイコンが隠れないように最低限の幅を確保 */
+    min-width: 100%; 
+    
+    /* 縦方向の中央揃え（iOSで文字が上下にズレるのを防ぐ） */
+    display: inline-flex;
+    align-items: center;
+}
+
+/* iOSで日付入力欄の右側に表示されるクリアボタンや矢印の隙間を調整 */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    background-position: right;
+    background-size: contain;
+    cursor: pointer;
+    /* 右端に少しだけ余白を作って途切れを防ぐ */
+    margin-right: 5px; 
+}
