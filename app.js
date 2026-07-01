@@ -75,7 +75,7 @@ function App() {
           alert("SheetJSライブラリが読み込まれていません。");
           return;
         }
-        const wb = XLSX.read(evt.target.result, { type: "binary", cellNF: true });
+        const wb = XLSX.read(evt.target.result, { type: "binary", cellNF: true, sheetStubs: true });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
