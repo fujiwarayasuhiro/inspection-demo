@@ -261,6 +261,8 @@ input[type="file"]::file-selector-button {
   input[ type="date"] {
   padding: 10 px;
   font-size: 16 px; /* 💡16pxに変更して自動ズームを防止 */
+  box-sizing: border-box; /* 💡追加：余白を含めた高さの計算を統一 */
+  height: 45 px; /* 💡追加：すべての高さを一律45pxに強制固定 */
   }
   
   .radio-item {
