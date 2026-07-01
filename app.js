@@ -93,8 +93,9 @@ function App() {
             const isNotDate = !formatStr.includes("y") && !formatStr.includes("m") && !formatStr.includes("d");
             if (hasNumberFormat && isNotDate) numCols.push(h);
 
-            // 💡追加：書式に y, m, d のいずれかが含まれる場合は日付列とする
-            if (formatStr.includes("y") || formatStr.includes("m") || formatStr.includes("d")) {
+            // 💡判定を厳格に修正：y, m, dを含み、かつ純粋な数値書式（0や#）を含まない場合のみ日付列とする
+            const isRealDate = (formatStr.includes("y") || formatStr.includes("m") || formatStr.includes("d")) && !hasNumberFormat;
+            if (isRealDate) {
               dateCols.push(h);
             }
           }
