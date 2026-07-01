@@ -96,11 +96,13 @@ function App() {
           const cell = ws[cellAddress];
           if (cell && cell.z) {
             const formatStr = String(cell.z).toLowerCase();
-            const hasNumberFormat = formatStr.includes("0") || formatStr.includes("#");
+            
+            // 💡修正：通常の数値（0や#）に加えて、空欄時に割り当てられる "general" も数値判定に含める
+            const hasNumberFormat = formatStr.includes("0") || formatStr.includes("#") || formatStr === "general";
             const isNotDate = !formatStr.includes("y") && !formatStr.includes("m") && !formatStr.includes("d");
             if (hasNumberFormat && isNotDate) numCols.push(h);
 
-            // 💡判定を厳格に修正：y, m, dを含み、かつ純粋な数値書式（0や#）を含まない場合のみ日付列とする
+            // 💡判定を厳格に修正：y, m, dを含み、かつ純粋な数値書式（0や#）を含ない場合のみ日付列とする
             const isRealDate = (formatStr.includes("y") || formatStr.includes("m") || formatStr.includes("d")) && !hasNumberFormat;
             if (isRealDate) {
               dateCols.push(h);
