@@ -259,10 +259,22 @@ input[type="file"]::file-selector-button {
   input[ type="text"],
   input[ type="number"],
   input[ type="date"] {
-  padding: 10 px;
-  font-size: 16 px; /* 💡16pxに変更して自動ズームを防止 */
-  box-sizing: border-box; /* 💡追加：余白を含めた高さの計算を統一 */
-  height: 45 px; /* 💡追加：すべての高さを一律45pxに強制固定 */
+    padding: 10 px;
+    font-size: 16 px; /* 💡16pxに変更して自動ズームを防止 */
+    box-sizing: border-box; /* 💡追加：余白を含めた高さの計算を統一 */
+    height: 45 px; /* 💡追加：すべての高さを一律45pxに強制固定 */
+
+    /* 💡iPhoneの未入力バグ対策を追加 */
+    display: inline-flex;  /* 内部の配置をフレックスボックス化 */
+    align-items: center;   /* 上下の中央に強制配置 */
+  }
+
+  /* 💡iPhoneの日付入力欄の「文字エリア」の隙間をゼロにして高さを揃える */
+  input[type="date"]::-webkit-date-and-time-value {
+    margin: 0;
+    padding: 0;
+    min-height: 1.5em;    /* 文字の高さを確保 */
+    line-height: 1.5em;
   }
   
   .radio-item {
