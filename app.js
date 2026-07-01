@@ -15,19 +15,24 @@ function App() {
 
   // 入力タイプ判定
   const getInputType = (headerName, value) => {
-    // 💡追加：空欄でも書式が日付ならdateにする
+    // 💡日付書式の列なら、空欄でも最優先で date にする
     if (dateFields.includes(headerName)) return "date";
-    // ...他の判定ロジック...
+    
+    // 💡修正（位置を上に移動）：数値書式の列なら、空欄であっても最優先で number にする
     if (numericFields.includes(headerName)) return "number";
+    
+    // 💡空欄チェックの順番を下げます
     if (!value) return "text";
+    
     if (typeof value === "number" && value > 40000 && value < 50000) return "date";
     if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) return "date";
-    // 💡修正後：完全に半角数字（またはマイナス・小数）のみの文字列の時だけ number にする
+    
+    // 完全に半角数字（またはマイナス・小数）のみの文字列の時だけ number にする
     if (typeof value === "number" || (typeof value === "string" && /^-?\d+(\.\d+)?$/.test(value))) return "number";
 
     return "text";
   };
-
+  
   // ✅ 【修正】日付分解のタイポ（parts[0]など）を完全に修正
   function formatDateForInput(value) {
     if (!value) return "";
