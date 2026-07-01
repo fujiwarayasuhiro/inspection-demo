@@ -90,27 +90,38 @@ function App() {
 
         // 3行目のセルから数値書式（ユーザー定義含む）を解析
         let numCols = [];
-        let dateCols = []; // 💡追加
+        let dateCols = [];
         currentHeaders.forEach((h, i) => {
           const cellAddress = XLSX.utils.encode_cell({ r: 2, c: i });
           const cell = ws[cellAddress];
-          if (cell && cell.z) {
-            const formatStr = String(cell.z).toLowerCase();
-            
-            // 💡修正：通常の数値（0や#）に加えて、空欄時に割り当てられる "general" も数値判定に含める
-            const hasNumberFormat = formatStr.includes("0") || formatStr.includes("#") || formatStr === "general";
-            const isNotDate = !formatStr.includes("y") && !formatStr.includes("m") && !formatStr.includes("d");
-            if (hasNumberFormat && isNotDate) numCols.push(h);
+          
+          // 💡修正：cell が存在しない（完全に空）場合や、cell.z がない場合も想定してデフォルトを設定
+          if (cell) {
+            // 書式設定（cell.z）がない場合は、セルの型（cell.t）が数値（'n'）かどうか、または標準設定かをみる
+            const formatStr = cell.z ? String(cell.z).toLowerCase() : "general";
+            const cellType = cell.t || "";
 
-            // 💡判定を厳格に修正：y, m, dを含み、かつ純粋な数値書式（0や#）を含ない場合のみ日付列とする
-            const isRealDate = (formatStr.includes("y") || formatStr.includes("m") || formatStr.includes("d")) && !hasNumberFormat;
+            // 通常の数値（0や#）、内部書式名（general）、またはセルの型が数値（'n'）の場合
+            const hasNumberFormat = formatStr.includes("0") || formatStr.includes("#") || formatStr === "general" || cellType === "n";
+            const isNotDate = !formatStr.includes("y") && !formatStr.includes("m") && !formatStr.includes("d");
+            
+            if (hasNumberFormat && isNotDate) {
+              numCols.push(h);
+            }
+
+            // 日付列の判定
+            const isRealDate = (formatStr.includes("y") || formatStr.includes("m") || formatStr.includes("d")) && !(formatStr.includes("0") || formatStr.includes("#"));
             if (isRealDate) {
               dateCols.push(h);
             }
+          } else {
+            // 💡追加：3行目のセル自体が完全に空（undefined）で書式が取れない場合の安全策
+            // 通常、何も入力したことがないデフォルトのセルは数値でもテキストでも「標準（general）」として扱われます
+            numCols.push(h); 
           }
         });
         setNumericFields(numCols);
-        setDateFields(dateCols); // 💡追加
+        setDateFields(dateCols);
 
         // データ行（3行目以降）を正確にマップ
         const data = rows.slice(2).map(row => {
