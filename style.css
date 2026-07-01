@@ -255,12 +255,14 @@ input[type="file"]::file-selector-button {
     padding: 14px;
     margin-bottom: 12px;
   }
-  input[type="text"],
-  input[type="number"],
-  input[type="date"] {
-    padding: 10px;
-    font-size: 15px;
+  
+  input[ type="text"],
+  input[ type="number"],
+  input[ type="date"] {
+  padding: 10 px;
+  font-size: 16 px; /* 💡16pxに変更して自動ズームを防止 */
   }
+  
   .radio-item {
     padding: 10px;
     font-size: 16px;
