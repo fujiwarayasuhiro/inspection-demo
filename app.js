@@ -7,6 +7,7 @@ function App() {
   const [screen, setScreen] = useState("list");
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [numericFields, setNumericFields] = useState([]);
+  const [ dateFields, setDateFields] = useState([]);
   const [fileName, setFileName] = useState("");
 
   // ○×判定
@@ -14,6 +15,9 @@ function App() {
 
   // 入力タイプ判定
   const getInputType = (headerName, value) => {
+    // 💡追加：空欄でも書式が日付ならdateにする
+    if (dateFields.includes(headerName)) return "date";
+    // ...他の判定ロジック...
     if (numericFields.includes(headerName)) return "number";
     if (!value) return "text";
     if (typeof value === "number" && value > 40000 && value < 50000) return "date";
@@ -79,6 +83,7 @@ function App() {
 
         // 3行目のセルから数値書式（ユーザー定義含む）を解析
         let numCols = [];
+        let dateCols = []; // 💡追加
         currentHeaders.forEach((h, i) => {
           const cellAddress = XLSX.utils.encode_cell({ r: 2, c: i });
           const cell = ws[cellAddress];
@@ -87,9 +92,15 @@ function App() {
             const hasNumberFormat = formatStr.includes("0") || formatStr.includes("#");
             const isNotDate = !formatStr.includes("y") && !formatStr.includes("m") && !formatStr.includes("d");
             if (hasNumberFormat && isNotDate) numCols.push(h);
+
+            // 💡追加：書式に y, m, d のいずれかが含まれる場合は日付列とする
+            if (formatStr.includes("y") || formatStr.includes("m") || formatStr.includes("d")) {
+              dateCols.push(h);
+            }
           }
         });
         setNumericFields(numCols);
+        setDateFields(dateCols); // 💡追加
 
         // データ行（3行目以降）を正確にマップ
         const data = rows.slice(2).map(row => {
