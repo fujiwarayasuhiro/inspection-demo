@@ -15,25 +15,18 @@ function App() {
 
   // 入力タイプ判定
   const getInputType = (headerName, value) => {
-    // 💡日付書式の列なら、空欄でも最優先で date にする
     if (dateFields.includes(headerName)) return "date";
-    
-    // 💡修正（位置を上に移動）：数値書式の列なら、空欄であっても最優先で number にする
     if (numericFields.includes(headerName)) return "number";
-    
-    // 💡空欄チェックの順番を下げます
     if (!value) return "text";
     
     if (typeof value === "number" && value > 40000 && value < 50000) return "date";
     if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) return "date";
     
-    // 完全に半角数字（またはマイナス・小数）のみの文字列の時だけ number にする
     if (typeof value === "number" || (typeof value === "string" && /^-?\d+(\.\d+)?$/.test(value))) return "number";
 
     return "text";
   };
   
-  // ✅ 【修正】日付分解のタイポ（parts[0]など）を完全に修正
   function formatDateForInput(value) {
     if (!value) return "";
     if (typeof value === "number") {
@@ -50,7 +43,6 @@ function App() {
     return value;
   }
 
-  // 日付の逆変換（yyyy-mm-dd -> yyyy/mm/dd）
   const handleDateChange = (key, rawValue) => {
     if (!rawValue) {
       updateValue(key, "");
@@ -81,16 +73,14 @@ function App() {
 
         if (!rows || rows.length === 0) return;
 
-        // ✅ 【修正】rows[0] と rows[1] を明示的に指定して取得
         const currentHeaders = rows[0] || [];
         const currentFields = rows[1] || [];
         
         setHeaders(currentHeaders);
         setFields(currentFields);
 
-        // 3行目のセルから数値書式（ユーザー定義含む）を解析
         let numCols = [];
-        let dateCols = []; // 💡追加
+        let dateCols = []; 
         currentHeaders.forEach((h, i) => {
           const cellAddress = XLSX.utils.encode_cell({ r: 2, c: i });
           const cell = ws[cellAddress];
@@ -100,7 +90,6 @@ function App() {
             const isNotDate = !formatStr.includes("y") && !formatStr.includes("m") && !formatStr.includes("d");
             if (hasNumberFormat && isNotDate) numCols.push(h);
 
-            // 💡判定を厳格に修正：y, m, dを含み、かつ純粋な数値書式（0や#）を含まない場合のみ日付列とする
             const isRealDate = (formatStr.includes("y") || formatStr.includes("m") || formatStr.includes("d")) && !hasNumberFormat;
             if (isRealDate) {
               dateCols.push(h);
@@ -108,11 +97,13 @@ function App() {
           }
         });
         setNumericFields(numCols);
-        setDateFields(dateCols); // 💡追加
+        setDateFields(dateCols); 
 
-        // データ行（3行目以降）を正確にマップ
         const data = rows.slice(2).map(row => {
           let obj = {};
+          // アプリ内部用の点検完了フラグを初期化
+          obj._isCompleted = false; 
+
           currentHeaders.forEach((h, i) => {
             let val = row[i] === undefined || row[i] === null ? "" : row[i];
             if (typeof val === "number" && val > 40000 && val < 50000 && !numCols.includes(h)) {
@@ -137,26 +128,24 @@ function App() {
     reader.readAsBinaryString(file);
   };
 
-  // 更新
   const updateValue = (key, value) => {
     const newData = [...records];
     newData[selectedIndex][key] = value;
     setRecords(newData);
   };
 
-  // ✅ 【修正】Excel出力時のデータ二重化バグを完全に修正
+  // Excel出力
   const exportExcel = () => {
     if (!window.XLSX) return;
-    // records（オブジェクトの配列）から、純粋な値のみの2次元配列を作成
+    // 💡内部管理用プロパティ(_isCompleted)がExcelに書き出されないよう、headersにあるキーのみを抽出
     const dataRows = records.map(r => headers.map(h => r[h] === undefined || r[h] === null ? "" : r[h]));
 
     const ws = XLSX.utils.aoa_to_sheet([
       headers,
       fields,
-      ...dataRows // 🔹 rows ではなく、データ行だけを展開するように修正
+      ...dataRows 
     ]);
 
-    // 日付セルのエクセルシリアル変換 ＆ 書式設定
     Object.keys(ws).forEach(cellRef => {
       if (cellRef.startsWith("!")) return;
       const cell = ws[cellRef];
@@ -179,12 +168,13 @@ function App() {
     XLSX.writeFile(wb, "result.xlsx");
   };
 
-  // 高速化キャッシュ処理
+  // 📌 ④ 高速化キャッシュ処理（点検完了フラグをクラス名に反映）
   const renderListCards = useMemo(() => {
     return records.map((rec, i) =>
       React.createElement("div", {
         key: i,
-        className: "card",
+        // _isCompletedがtrueなら「is-completed」クラスを追加して枠線を緑にする
+        className: `card ${rec._isCompleted ? "is-completed" : ""}`,
         onClick: () => {
           setSelectedIndex(i);
           setScreen("detail");
@@ -202,8 +192,12 @@ function App() {
   // 一覧画面
   if (screen === "list") {
     return (
-      React.createElement("div", null,
-        React.createElement("div", { className: "header" }, "点検入力アプリ"),
+      React.createElement("div", { className: "list-screen" }, // ① スクロール対応クラス
+        // ①・② ヘッダー固定 & Ver追加
+        React.createElement("div", { className: "header" }, 
+          React.createElement("span", { className: "header-ver" }, "Ver.1.0.0"),
+          "点検入力アプリ"
+        ),
         React.createElement("div", { className: "container" },
           
           React.createElement("div", { className: "file-wrapper-box" },
@@ -237,12 +231,35 @@ function App() {
   return (
     React.createElement("div", { className: "detail-screen" },
       React.createElement("div", { className: "sticky-header" },
-        React.createElement("div", { className: "header" }, "点検詳細入力"),
+        // ② ヘッダーへのVer追加
+        React.createElement("div", { className: "header" }, 
+          React.createElement("span", { className: "header-ver" }, "Ver.1.0.0"),
+          "点検詳細入力"
+        ),
+        // ③・④ ナビゲーションコントロールの配置調整
         React.createElement("div", { className: "action-bar" },
-          React.createElement("button", {
-            className: "button-back",
-            onClick: () => setScreen("list")
-          }, "← 戻る")
+          // ④ 左端：点検完了チェックボックス
+          React.createElement("div", { className: "action-left" },
+            React.createElement("label", { className: "complete-checkbox-label" },
+              React.createElement("input", {
+                type: "checkbox",
+                checked: !!records[selectedIndex]._isCompleted,
+                onChange: (e) => updateValue("_isCompleted", e.target.checked)
+              }),
+              "点検完了"
+            )
+          ),
+          // ③ 中央：XX／XX の件数表示
+          React.createElement("div", { className: "action-center" },
+            `${selectedIndex + 1} ／ ${records.length}`
+          ),
+          // 右端：戻るボタン
+          React.createElement("div", { className: "action-right" },
+            React.createElement("button", {
+              className: "button-back",
+              onClick: () => setScreen("list")
+            }, "← 戻る")
+          )
         )
       ),
       React.createElement("div", { className: "container" },
