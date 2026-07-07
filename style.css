@@ -167,10 +167,10 @@ body {
   transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
 }
 
-/* 📌 ④ 【修正】点検完了時のカードスタイル（枠線に加えて背景色もバナーと同様の薄緑に変更） */
+/* 📌 点検完了時のカードスタイル */
 .card.is-completed {
   border: 2px solid #2e7d32;
-  background: #e8f5e9; /* 💡固定バナーと背景色を合わせました */
+  background: #e8f5e9; 
   box-shadow: 0 4px 12px rgba(46, 125, 50, 0.15);
 }
 
@@ -179,6 +179,21 @@ body {
   font-size: 15px;
   margin-bottom: 12px;
   color: #444;
+}
+
+/* 📌 追加：■が含まれる見出し（カテゴリ区切り）のスタイル */
+.card.is-heading {
+  background: transparent; /* 背景を透明に */
+  border: none;            /* 枠線を消す */
+  box-shadow: none;        /* シャドウを消す */
+  padding: 16px 4px 4px 4px; /* 余白の調整 */
+  margin-bottom: 8px;
+  margin-top: 12px;        /* 上に隙間をあけて区切りを強調 */
+  font-size: 16px;
+  font-weight: bold;
+  color: #0078d4;          /* メインの青色で強調 */
+  border-bottom: 2px solid #0078d4; /* 下線をつけてさらに分かりやすく */
+  border-radius: 0;
 }
 
 /* ✍️ 入力欄はみ出し防止 */
