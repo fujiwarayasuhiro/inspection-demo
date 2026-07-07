@@ -101,7 +101,6 @@ function App() {
 
         const data = rows.slice(2).map(row => {
           let obj = {};
-          // アプリ内部用の点検完了フラグを初期化
           obj._isCompleted = false; 
 
           currentHeaders.forEach((h, i) => {
@@ -137,7 +136,6 @@ function App() {
   // Excel出力
   const exportExcel = () => {
     if (!window.XLSX) return;
-    // 💡内部管理用プロパティ(_isCompleted)がExcelに書き出されないよう、headersにあるキーのみを抽出
     const dataRows = records.map(r => headers.map(h => r[h] === undefined || r[h] === null ? "" : r[h]));
 
     const ws = XLSX.utils.aoa_to_sheet([
@@ -168,12 +166,11 @@ function App() {
     XLSX.writeFile(wb, "result.xlsx");
   };
 
-  // 📌 ④ 高速化キャッシュ処理（点検完了フラグをクラス名に反映）
+  // 高速化キャッシュ処理
   const renderListCards = useMemo(() => {
     return records.map((rec, i) =>
       React.createElement("div", {
         key: i,
-        // _isCompletedがtrueなら「is-completed」クラスを追加して枠線を緑にする
         className: `card ${rec._isCompleted ? "is-completed" : ""}`,
         onClick: () => {
           setSelectedIndex(i);
@@ -192,8 +189,7 @@ function App() {
   // 一覧画面
   if (screen === "list") {
     return (
-      React.createElement("div", { className: "list-screen" }, // ① スクロール対応クラス
-        // ①・② ヘッダー固定 & Ver追加
+      React.createElement("div", { className: "list-screen" },
         React.createElement("div", { className: "header" }, 
           React.createElement("span", { className: "header-ver" }, "Ver.1.0.0"),
           "点検入力アプリ"
@@ -231,15 +227,25 @@ function App() {
   return (
     React.createElement("div", { className: "detail-screen" },
       React.createElement("div", { className: "sticky-header" },
-        // ② ヘッダーへのVer追加
         React.createElement("div", { className: "header" }, 
           React.createElement("span", { className: "header-ver" }, "Ver.1.0.0"),
           "点検詳細入力"
         ),
-        // ③・④ ナビゲーションコントロールの配置調整
+        // 🔄 【修正】左右の配置を入れ替えました
         React.createElement("div", { className: "action-bar" },
-          // ④ 左端：点検完了チェックボックス
+          // 左端：← 戻るボタン
           React.createElement("div", { className: "action-left" },
+            React.createElement("button", {
+              className: "button-back",
+              onClick: () => setScreen("list")
+            }, "← 戻る")
+          ),
+          // 中央：XX ／ XX 件数表示（そのまま）
+          React.createElement("div", { className: "action-center" },
+            `${selectedIndex + 1} ／ ${records.length}`
+          ),
+          // 右端：点検完了チェックボックス
+          React.createElement("div", { className: "action-right" },
             React.createElement("label", { className: "complete-checkbox-label" },
               React.createElement("input", {
                 type: "checkbox",
@@ -248,17 +254,6 @@ function App() {
               }),
               "点検完了"
             )
-          ),
-          // ③ 中央：XX／XX の件数表示
-          React.createElement("div", { className: "action-center" },
-            `${selectedIndex + 1} ／ ${records.length}`
-          ),
-          // 右端：戻るボタン
-          React.createElement("div", { className: "action-right" },
-            React.createElement("button", {
-              className: "button-back",
-              onClick: () => setScreen("list")
-            }, "← 戻る")
           )
         )
       ),
