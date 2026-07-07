@@ -136,10 +136,12 @@ function App() {
   // Excel出力
   const exportExcel = () => {
     if (!window.XLSX) return;
+    
+    // 💡 内部データ状態のまま行データを作成（余計な単位文字列は付与しない）
     const dataRows = records.map(r => headers.map(h => r[h] === undefined || r[h] === null ? "" : r[h]));
 
     const ws = XLSX.utils.aoa_to_sheet([
-      headers,
+      headers, // ヘッダー項目名も読み込み時の一番最初の状態（『単位』が入ったまま）で出力
       fields,
       ...dataRows 
     ]);
@@ -177,7 +179,6 @@ function App() {
           setScreen("detail");
         }
       },
-        // 💡 一覧の簡易カード内でも「■」があるヘッダー項目はスキップ、またはそのまま表示（今回は先頭から4個のうち文字が含まれるものを表示）
         headers.slice(0, 4).map((h, idx) =>
           React.createElement("div", { key: idx },
             String(rec[h] || "")
@@ -278,29 +279,29 @@ function App() {
         headers.map((h, i) => {
           const rawValue = currentRecord[h] === undefined || currentRecord[h] === null ? "" : currentRecord[h];
           
-          // 📌 【修正】項目名の中に「■」が含まれているか判定
+          // ■が含まれる見出し（カテゴリ区切り）の判定
           const isHeading = h && h.includes("■");
 
           if (isHeading) {
-            // 💡 見出し項目の場合：入力欄は不要、タイルではなく太字で区切り表示
             return React.createElement("div", {
               key: i,
               className: "card is-heading"
             }, h);
           }
 
-          // 💡 通常の項目の場合（従来通りタイル形式＆入力欄あり）
+          // 通常の項目の場合
           const type = getInputType(h, rawValue);
           const value = type === "date" ? formatDateForInput(rawValue) : rawValue;
 
-          return React.createElement("div", {
-            key: i,
-            className: "card"
-          },
-            React.createElement("div", { className: "card-title" }, h),
-            
-            isBool(h) &&
-            React.createElement("div", { className: "radio-row" },
+          // 📌 『』の記号が入っていれば単位文字を抽出する
+          const unitMatch = h && h.match(/『([^』]+)』/);
+          const unitText = unitMatch ? unitMatch[1] : null;
+
+          // 💡 入力コントロール要素の構築
+          let inputElement;
+
+          if (isBool(h)) {
+            inputElement = React.createElement("div", { className: "radio-row" },
               React.createElement("label", { className: "radio-item is-maru" },
                 React.createElement("input", {
                   type: "radio",
@@ -319,10 +320,9 @@ function App() {
                 }),
                 React.createElement("span", null, "×")
               )
-            ),
-
-            !isBool(h) &&
-            React.createElement("input", {
+            );
+          } else {
+            const inputField = React.createElement("input", {
               type: type,
               value: value,
               onChange: (e) => {
@@ -332,7 +332,25 @@ function App() {
                   updateValue(h, e.target.value);
                 }
               }
-            })
+            });
+
+            // 📌 単位テキストが存在する場合は、入力ボックスの右側に接尾文字として配置
+            if (unitText) {
+              inputElement = React.createElement("div", { className: "input-with-unit" },
+                inputField,
+                React.createElement("span", { className: "input-unit-text" }, unitText)
+              );
+            } else {
+              inputElement = inputField;
+            }
+          }
+
+          return React.createElement("div", {
+            key: i,
+            className: "card"
+          },
+            React.createElement("div", { className: "card-title" }, h),
+            inputElement
           );
         })
       )
