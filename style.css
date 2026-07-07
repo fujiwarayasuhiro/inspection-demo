@@ -5,7 +5,13 @@ body {
   color: #333;
 }
 
+/* 📌 ①・② ヘッダーの共通固定スタイル */
 .header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 110;
   background: #0078d4;
   color: white;
   padding: 16px;
@@ -13,6 +19,22 @@ body {
   font-weight: bold;
   font-size: 18px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 📌 ② バージョン情報のスタイル */
+.header-ver {
+  font-size: 12px;
+  font-weight: normal;
+  opacity: 0.8;
+}
+
+/* 📌 ① 一覧画面の上部固定エリア対応 */
+.list-screen {
+  padding-top: 70px;
 }
 
 .container {
@@ -24,7 +46,7 @@ body {
 
 /* 📌 詳細画面の上部固定エリア */
 .detail-screen {
-  padding-top: 115px;
+  padding-top: 130px;
 }
 
 .sticky-header {
@@ -34,16 +56,59 @@ body {
   right: 0;
   z-index: 100;
   background: #f4f6f9;
+  padding-top: 55px; /* ヘッダーの高さ分下げる */
 }
 
+/* 📌 ③・④ アクションバーをFlexboxにして位置を調整 */
 .action-bar {
   max-width: 420px;
   margin: auto;
   padding: 8px 16px;
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* 両端に配置 */
 }
 
-/* 🔙 戻るボタンのデザイン（ファイル選択と同じテイストに統一） */
+.action-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.action-center {
+  flex: 1;
+  text-align: center;
+  font-weight: bold;
+  color: #555;
+  font-size: 15px;
+}
+
+.action-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 📌 ④ 点検完了チェックボックスのスタイル */
+.complete-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #2e7d32;
+  cursor: pointer;
+  user-select: none;
+}
+.complete-checkbox-label input {
+  width: 18px;
+  height: 18px;
+  accent-color: #2e7d32;
+  margin: 0;
+}
+
+/* 🔙 戻るボタンのデザイン */
 .button-back {
   display: inline-block;
   padding: 8px 16px;
@@ -73,6 +138,13 @@ body {
   overflow: hidden;
   box-sizing: border-box;
   border: 1px solid #eef2f5;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* 📌 ④ 点検完了時のカード枠色（グリーン） */
+.card.is-completed {
+  border: 2px solid #2e7d32;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.15);
 }
 
 .card-title {
@@ -242,8 +314,11 @@ input[type="file"]::file-selector-button {
 
 /* 📱 スマホ最適化 */
 @media (max-width: 480px) {
+  .list-screen {
+    padding-top: 60px;
+  }
   .detail-screen {
-    padding-top: 100px;
+    padding-top: 110px;
   }
   .action-bar {
     padding: 6px 12px;
@@ -260,20 +335,18 @@ input[type="file"]::file-selector-button {
   input[ type="number"],
   input[ type="date"] {
     padding: 10 px;
-    font-size: 16 px; /* 💡16pxに変更して自動ズームを防止 */
-    box-sizing: border-box; /* 💡追加：余白を含めた高さの計算を統一 */
-    height: 45 px; /* 💡追加：すべての高さを一律45pxに強制固定 */
+    font-size: 16 px; 
+    box-sizing: border-box; 
+    height: 45 px; 
 
-    /* 💡iPhoneの未入力バグ対策を追加 */
-    display: inline-flex;  /* 内部の配置をフレックスボックス化 */
-    align-items: center;   /* 上下の中央に強制配置 */
+    display: inline-flex;  
+    align-items: center;   
   }
 
-  /* 💡iPhoneの日付入力欄の「文字エリア」の隙間をゼロにして高さを揃える */
   input[type="date"]::-webkit-date-and-time-value {
     margin: 0;
     padding: 0;
-    min-height: 1.5em;    /* 文字の高さを確保 */
+    min-height: 1.5em;    
     line-height: 1.5em;
   }
   
@@ -285,26 +358,17 @@ input[type="file"]::file-selector-button {
 
 /* 日付入力欄のiPhoneでの表示崩れ対策 */
 input[type="date"] {
-    /* iOS固有のスタイルを無効化 */
     -webkit-appearance: none;
     appearance: none;
-    
-    /* 横幅の計算にパディングとボーダーを含める（はみ出し防止） */
     box-sizing: border-box; 
-    
-    /* 文字やアイコンが隠れないように最低限の幅を確保 */
     min-width: 100%; 
-    
-    /* 縦方向の中央揃え（iOSで文字が上下にズレるのを防ぐ） */
     display: inline-flex;
     align-items: center;
 }
 
-/* iOSで日付入力欄の右側に表示されるクリアボタンや矢印の隙間を調整 */
 input[type="date"]::-webkit-calendar-picker-indicator {
     background-position: right;
     background-size: contain;
     cursor: pointer;
-    /* 右端に少しだけ余白を作って途切れを防ぐ */
     margin-right: 5px; 
 }
