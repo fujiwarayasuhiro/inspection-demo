@@ -177,6 +177,7 @@ function App() {
           setScreen("detail");
         }
       },
+        // 💡 一覧の簡易カード内でも「■」があるヘッダー項目はスキップ、またはそのまま表示（今回は先頭から4個のうち文字が含まれるものを表示）
         headers.slice(0, 4).map((h, idx) =>
           React.createElement("div", { key: idx },
             String(rec[h] || "")
@@ -259,7 +260,7 @@ function App() {
           )
         ),
         
-        // 📌 追加：ナビゲーションバー直下のフローティングバナー（カードビューの固定表示）
+        // ナビゲーションバー直下のフローティングバナー
         React.createElement("div", { className: "floating-card-container" },
           React.createElement("div", { 
             className: `floating-card ${currentRecord._isCompleted ? "is-completed" : ""}` 
@@ -276,6 +277,19 @@ function App() {
       React.createElement("div", { className: "container" },
         headers.map((h, i) => {
           const rawValue = currentRecord[h] === undefined || currentRecord[h] === null ? "" : currentRecord[h];
+          
+          // 📌 【修正】項目名の中に「■」が含まれているか判定
+          const isHeading = h && h.includes("■");
+
+          if (isHeading) {
+            // 💡 見出し項目の場合：入力欄は不要、タイルではなく太字で区切り表示
+            return React.createElement("div", {
+              key: i,
+              className: "card is-heading"
+            }, h);
+          }
+
+          // 💡 通常の項目の場合（従来通りタイル形式＆入力欄あり）
           const type = getInputType(h, rawValue);
           const value = type === "date" ? formatDateForInput(rawValue) : rawValue;
 
