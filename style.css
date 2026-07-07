@@ -181,7 +181,7 @@ body {
   color: #444;
 }
 
-/* 📌 追加：■が含まれる見出し（カテゴリ区切り）のスタイル */
+/* 📌 ■が含まれる見出し（カテゴリ区切り）のスタイル */
 .card.is-heading {
   background: transparent; /* 背景を透明に */
   border: none;            /* 枠線を消す */
@@ -194,6 +194,26 @@ body {
   color: #0078d4;          /* メインの青色で強調 */
   border-bottom: 2px solid #0078d4; /* 下線をつけてさらに分かりやすく */
   border-radius: 0;
+}
+
+/* 📌 追加：『』の単位を表示するための横並びスタイル */
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.input-with-unit input {
+  flex: 1; /* 入力欄を可能な限り広げる */
+}
+
+.input-unit-text {
+  font-size: 15px;
+  font-weight: bold;
+  color: #555;
+  white-space: nowrap; /* 単位の改行を防止 */
+  padding-right: 4px;
 }
 
 /* ✍️ 入力欄はみ出し防止 */
