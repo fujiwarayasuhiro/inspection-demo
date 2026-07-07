@@ -44,9 +44,9 @@ body {
   box-sizing: border-box;
 }
 
-/* 📌 詳細画面の上部固定エリア */
+/* 📌 変更：詳細画面の上部固定エリア（フローティングバナー追加に伴い余白を拡大） */
 .detail-screen {
-  padding-top: 130px;
+  padding-top: 230px;
 }
 
 .sticky-header {
@@ -57,9 +57,10 @@ body {
   z-index: 100;
   background: #f4f6f9;
   padding-top: 55px; /* ヘッダーの高さ分下げる */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* 境界をわかりやすく */
 }
 
-/* 📌 ③・④ アクションバーをFlexboxにして位置を調整 */
+/* 📌 ③・④ アクションバーの配置 */
 .action-bar {
   max-width: 420px;
   margin: auto;
@@ -67,7 +68,7 @@ body {
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  justify-content: space-between; /* 両端に配置 */
+  justify-content: space-between;
 }
 
 .action-left {
@@ -128,7 +129,32 @@ body {
   transform: translateY(1px);
 }
 
-/* 📦 カードデザイン */
+/* 📌 追加：フローティングバナー（固定表示カード）のスタイル */
+.floating-card-container {
+  max-width: 420px;
+  margin: auto;
+  padding: 4px 16px 12px 16px;
+  box-sizing: border-box;
+}
+
+.floating-card {
+  background: #edf1f5; /* 💡固定用として少し色をグレーに変更 */
+  border: 1px solid #ccd4dc; /* 💡枠線を少し強調 */
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px;
+  color: #444;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+  line-height: 1.4;
+}
+
+/* 点検完了時のフローティングバナー枠色 */
+.floating-card.is-completed {
+  border: 2px solid #2e7d32;
+  background: #e8f5e9; /* 完了時は薄い緑 */
+}
+
+/* 📦 通常カードデザイン */
 .card {
   background: white;
   border-radius: 12px;
@@ -317,8 +343,9 @@ input[type="file"]::file-selector-button {
   .list-screen {
     padding-top: 60px;
   }
+  /* 変更：スマホ環境での詳細表示の固定エリア位置 */
   .detail-screen {
-    padding-top: 110px;
+    padding-top: 200px;
   }
   .action-bar {
     padding: 6px 12px;
@@ -331,14 +358,13 @@ input[type="file"]::file-selector-button {
     margin-bottom: 12px;
   }
   
-  input[ type="text"],
-  input[ type="number"],
-  input[ type="date"] {
-    padding: 10 px;
-    font-size: 16 px; 
+  input[type="text"],
+  input[type="number"],
+  input[type="date"] {
+    padding: 10px;
+    font-size: 16px; 
     box-sizing: border-box; 
-    height: 45 px; 
-
+    height: 45px; 
     display: inline-flex;  
     align-items: center;   
   }
