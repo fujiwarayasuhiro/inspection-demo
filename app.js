@@ -223,6 +223,9 @@ function App() {
     );
   }
 
+  // 詳細画面用のカレントレコードの情報を取得
+  const currentRecord = records[selectedIndex];
+
   // 詳細画面
   return (
     React.createElement("div", { className: "detail-screen" },
@@ -231,7 +234,6 @@ function App() {
           React.createElement("span", { className: "header-ver" }, "Ver.1.0.0"),
           "点検詳細入力"
         ),
-        // 🔄 【修正】左右の配置を入れ替えました
         React.createElement("div", { className: "action-bar" },
           // 左端：← 戻るボタン
           React.createElement("div", { className: "action-left" },
@@ -240,7 +242,7 @@ function App() {
               onClick: () => setScreen("list")
             }, "← 戻る")
           ),
-          // 中央：XX ／ XX 件数表示（そのまま）
+          // 中央：XX ／ XX 件数表示
           React.createElement("div", { className: "action-center" },
             `${selectedIndex + 1} ／ ${records.length}`
           ),
@@ -249,17 +251,31 @@ function App() {
             React.createElement("label", { className: "complete-checkbox-label" },
               React.createElement("input", {
                 type: "checkbox",
-                checked: !!records[selectedIndex]._isCompleted,
+                checked: !!currentRecord._isCompleted,
                 onChange: (e) => updateValue("_isCompleted", e.target.checked)
               }),
               "点検完了"
             )
           )
+        ),
+        
+        // 📌 追加：ナビゲーションバー直下のフローティングバナー（カードビューの固定表示）
+        React.createElement("div", { className: "floating-card-container" },
+          React.createElement("div", { 
+            className: `floating-card ${currentRecord._isCompleted ? "is-completed" : ""}` 
+          },
+            headers.slice(0, 4).map((h, idx) =>
+              React.createElement("div", { key: idx },
+                String(currentRecord[h] || "")
+              )
+            )
+          )
         )
       ),
+
       React.createElement("div", { className: "container" },
         headers.map((h, i) => {
-          const rawValue = records[selectedIndex][h] === undefined || records[selectedIndex][h] === null ? "" : records[selectedIndex][h];
+          const rawValue = currentRecord[h] === undefined || currentRecord[h] === null ? "" : currentRecord[h];
           const type = getInputType(h, rawValue);
           const value = type === "date" ? formatDateForInput(rawValue) : rawValue;
 
