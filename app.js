@@ -12,6 +12,8 @@ function App() {
   const [yearMonthFields, setYearMonthFields] = useState([]);
   const [fileName, setFileName] = useState("");
   const [selectOptions, setSelectOptions] = useState({});
+  // 📌 エラーが発生した項目（インデックス番号）を保持するStateを追加
+  const [errorIndices, setErrorIndices] = useState([]);
 
   // ○×判定
   const isBool = (label) => label && label.includes("○") && label.includes("×");
@@ -186,6 +188,36 @@ function App() {
     setRecords(newData);
   };
 
+  // 📌 戻るボタン押下時の必須チェックバリデーション
+  const handleBack = () => {
+    const currentRec = records[selectedIndex];
+    const errors = [];
+
+    headers.forEach((h, i) => {
+      // 非表示項目(◆)や見出し(■)はチェック対象外
+      if ((h && h.includes("◆")) || (h && h.includes("■"))) return;
+
+      // 「※」が含まれていて、値が空の場合
+      const isRequired = h && h.includes("※");
+      const value = currentRec[h];
+      const isEmpty = value === undefined || value === null || String(value).trim() === "";
+
+      if (isRequired && isEmpty) {
+        errors.push(i); // エラーが起きた項目のインデックスを記録
+      }
+    });
+
+    if (errors.length > 0) {
+      setErrorIndices(errors);
+      alert("必須入力項目で未入力箇所があります");
+      return; // 画面遷移をストップ
+    }
+
+    // エラーがなければクリアして戻る
+    setErrorIndices([]);
+    setScreen("list");
+  };
+
   // Excel出力
   const exportExcel = () => {
     if (!window.XLSX) return;
@@ -245,6 +277,7 @@ function App() {
         className: `card ${rec._isCompleted ? "is-completed" : ""}`,
         onClick: () => {
           setSelectedIndex(i);
+          setErrorIndices([]); // 📌 詳細画面を開くときはエラー状態をリセット
           setScreen("detail");
         }
       },
@@ -309,7 +342,7 @@ function App() {
           React.createElement("div", { className: "action-left" },
             React.createElement("button", {
               className: "button-back",
-              onClick: () => setScreen("list")
+              onClick: handleBack // 📌 チェックロジックへ変更
             }, "← 戻る")
           ),
           React.createElement("div", { className: "action-center" },
@@ -372,6 +405,12 @@ function App() {
           
           // 📌 項目名に「▲」が含まれている場合は入力不可（disabled）にする判定
           const isDisabled = h && h.includes("▲");
+          
+          // 📌 項目名に「※」が含まれている場合は必須入力項目にする判定
+          const isRequired = h && h.includes("※");
+          
+          // 📌 現在の項目がエラー対象かつ、まだ値が空のままか判定
+          const hasError = errorIndices.includes(i) && (rawValue === undefined || rawValue === null || String(rawValue).trim() === "");
 
           let inputElement;
 
@@ -400,7 +439,7 @@ function App() {
             );
           } else if (isSelect && hasOptions) {
             inputElement = React.createElement("select", {
-              className: "select-box",
+              className: `select-box ${hasError ? "input-error" : ""}`, // 📌 エラー時用の枠線赤クラス
               value: rawValue,
               disabled: isDisabled, // 📌 入力不可を設定
               onChange: (e) => updateValue(h, e.target.value)
@@ -414,9 +453,10 @@ function App() {
             const inputField = React.createElement("input", {
               type: type,
               value: value,
+              className: hasError ? "input-error" : "", // 📌 エラー時用の枠線赤クラス
               disabled: isDisabled, // 📌 入力不可を設定
               onChange: (e) => {
-                // 📌 date型またはmonth型の場合は共通のチェンジハンドラへ送る
+                // 📌 date型またはmonth型の場合は共通 of チェンジハンドラへ送る
                 if (type === "date" || type === "month") {
                   handleDateChange(h, e.target.value, type === "month");
                 } else {
@@ -437,10 +477,14 @@ function App() {
 
           return React.createElement("div", {
             key: i,
-            className: `card ${isDisabled ? "is-disabled-card" : ""}` // 📌 カード自体をグレーアウトさせるクラスを追加
+            className: `card ${isDisabled ? "is-disabled-card" : ""} ${hasError ? "card-error" : ""}` // 📌 エラー用のカード枠線スタイルを追加
           },
-            React.createElement("div", { className: "card-title" }, h),
-            inputElement
+            React.createElement("div", { className: "card-title-row" }, // 📌 タイトルとバッジの横並び用レイアウトに変更
+              React.createElement("div", { className: "card-title" }, h),
+              isRequired && React.createElement("span", { className: "required-badge" }, "必須") // 📌 必須バッジ表示
+            ),
+            inputElement,
+            hasError && React.createElement("div", { className: "error-message-text" }, "未入力です") // 📌 未入力エラーメッセージ表示
           );
         })
       )
