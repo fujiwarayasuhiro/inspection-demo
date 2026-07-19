@@ -421,7 +421,7 @@ function App() {
                   type: "radio",
                   name: h,
                   checked: rawValue === "○",
-                  disabled: isDisabled, // 📌 入力不可を設定
+                  disabled: isDisabled,
                   onChange: () => updateValue(h, "○")
                 }),
                 React.createElement("span", null, "○")
@@ -431,7 +431,7 @@ function App() {
                   type: "radio",
                   name: h,
                   checked: rawValue === "×",
-                  disabled: isDisabled, // 📌 入力不可を設定
+                  disabled: isDisabled,
                   onChange: () => updateValue(h, "×")
                 }),
                 React.createElement("span", null, "×")
@@ -439,9 +439,9 @@ function App() {
             );
           } else if (isSelect && hasOptions) {
             inputElement = React.createElement("select", {
-              className: `select-box ${hasError ? "input-error" : ""}`, // 📌 エラー時用の枠線赤クラス
+              className: `select-box ${hasError ? "input-error" : ""}`,
               value: rawValue,
-              disabled: isDisabled, // 📌 入力不可を設定
+              disabled: isDisabled,
               onChange: (e) => updateValue(h, e.target.value)
             },
               React.createElement("option", { value: "" }, "-- 選択してください --"),
@@ -453,10 +453,9 @@ function App() {
             const inputField = React.createElement("input", {
               type: type,
               value: value,
-              className: hasError ? "input-error" : "", // 📌 エラー時用の枠線赤クラス
-              disabled: isDisabled, // 📌 入力不可を設定
+              className: hasError ? "input-error" : "",
+              disabled: isDisabled,
               onChange: (e) => {
-                // 📌 date型またはmonth型の場合は共通 of チェンジハンドラへ送る
                 if (type === "date" || type === "month") {
                   handleDateChange(h, e.target.value, type === "month");
                 } else {
@@ -475,31 +474,22 @@ function App() {
             }
           }
 
+          // 📌 エラーメッセージの文言をタイプ別に判定
+          // ラジオボタン(isBool)、プルダウン(isSelect)、日付・年月(date/month) は「未選択です」
+          const isSelectionType = isBool(h) || isSelect || type === "date" || type === "month";
+          const errorMessage = isSelectionType ? "未選択です" : "未入力です";
+
           return React.createElement("div", {
             key: i,
-            className: `card ${isDisabled ? "is-disabled-card" : ""} ${hasError ? "card-error" : ""}` // 📌 エラー用のカード枠線スタイルを追加
+            className: `card ${isDisabled ? "is-disabled-card" : ""} ${hasError ? "card-error" : ""}`
           },
-            React.createElement("div", { className: "card-title-row" }, // 📌 タイトルとバッジの横並び用レイアウトに変更
+            React.createElement("div", { className: "card-title-row" },
               React.createElement("div", { className: "card-title" }, h),
-              isRequired && React.createElement("span", { className: "required-badge" }, "必須") // 📌 必須バッジ表示
+              isRequired && React.createElement("span", { className: "required-badge" }, "必須")
             ),
-            // 📌 エラーメッセージの文言をタイプ別に判定
-            // ラジオボタン(isBool)、プルダウン(isSelect)、日付・年月(date/month) は「未選択です」
-            const isSelectionType = isBool(h) || isSelect || type === "date" || type === "month";
-            const errorMessage = isSelectionType ? "未選択です" : "未入力です";
-
-            return React.createElement("div", {
-              key: i,
-              className: `card ${isDisabled ? "is-disabled-card" : ""} ${hasError ? "card-error" : ""}`
-            },
-              React.createElement("div", { className: "card-title-row" },
-                React.createElement("div", { className: "card-title" }, h),
-                isRequired && React.createElement("span", { className: "required-badge" }, "必須")
-              ),
-              inputElement,
-              // 📌 判定したメッセージ文言（未選択です / 未入力です）を動的に表示
-              hasError && React.createElement("div", { className: "error-message-text" }, errorMessage)
-            );
+            inputElement,
+            hasError && React.createElement("div", { className: "error-message-text" }, errorMessage)
+          );
         })
       )
     )
