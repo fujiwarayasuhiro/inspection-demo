@@ -8,8 +8,11 @@ function App() {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [numericFields, setNumericFields] = useState([]);
   const [dateFields, setDateFields] = useState([]);
-  // 📌 年月（yyyy/mm）項目を保持するStateを追加
   const [yearMonthFields, setYearMonthFields] = useState([]);
+  // 📌 編集不可（▲付き）項目を管理するStateを追加
+  const [disabledFields, setDisabledFields] = useState([]);
+  // 📌 各項目のフォント色（カラーコード）を保持するStateを追加
+  const [headerColors, setHeaderColors] = useState({});
   const [fileName, setFileName] = useState("");
   const [selectOptions, setSelectOptions] = useState({});
 
@@ -18,14 +21,13 @@ function App() {
 
   // 入力タイプ判定
   const getInputType = (headerName, value) => {
-    if (yearMonthFields.includes(headerName)) return "month"; // 📌 年月項目の場合はHTMLのmonthタイプを使用
+    if (yearMonthFields.includes(headerName)) return "month"; 
     if (dateFields.includes(headerName)) return "date";
     if (numericFields.includes(headerName)) return "number";
     if (!value) return "text";
     
     if (typeof value === "number" && value > 40000 && value < 50000) return "date";
     if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) {
-      // 読み込み時文字列かつスラッシュ2個（日含む）か1個（年月のみ）かで分岐可能
       return value.split("/").length === 2 ? "month" : "date";
     }
     
@@ -34,7 +36,7 @@ function App() {
     return "text";
   };
   
-  // 📌 画面表示・入力欄（<input type="date/month">）に渡す値のフォーマット変換
+  // 画面表示・入力欄に渡す値のフォーマット変換
   function formatDateForInput(value, isMonthType = false) {
     if (!value) return "";
     if (typeof value === "number") {
@@ -42,10 +44,10 @@ function App() {
       const y = date.getFullYear();
       const m = String(date.getMonth() + 1).padStart(2, "0");
       if (isMonthType) {
-        return `${y}-${m}`; // month型は yyyy-mm 形式が必要
+        return `${y}-${m}`;
       }
       const d = String(date.getDate()).padStart(2, "0");
-      return `${y}-${m}-${d}`; // date型は yyyy-mm-dd 形式が必要
+      return `${y}-${m}-${d}`;
     }
     if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) {
       const parts = value.split("/");
@@ -60,14 +62,30 @@ function App() {
     return value;
   }
 
-  // 📌 画面で日付・年月が変更された際のデータ保存処理
+  // 画面で日付・年月が変更された際のデータ保存処理
   const handleDateChange = (key, rawValue, isMonthType = false) => {
     if (!rawValue) {
       updateValue(key, "");
       return;
     }
-    const formatted = rawValue.replace(/-/g, "/"); // yyyy-mm を yyyy/mm に置換
+    const formatted = rawValue.replace(/-/g, "/");
     updateValue(key, formatted);
+  };
+
+  // 📌 Excelのフォントカラー構造からカラーコードを抽出するヘルパー関数
+  const parseExcelColor = (colorObj) => {
+    if (!colorObj) return null;
+    if (colorObj.rgb) {
+      // ARGB形式（例: FFFF0000）の場合は先頭のAlpha2文字をカットして #RRGGBB にする
+      const rgbStr = String(colorObj.rgb);
+      return rgbStr.length === 8 ? `#${rgbStr.substring(2)}` : `#${rgbStr}`;
+    }
+    // 標準テーマ色やインデックスカラーの一時的なマッピング（簡易フォールバック）
+    if (colorObj.theme !== undefined) {
+      const themes = ["#000000", "#FFFFFF", "#1F4E78", "#D9E1F2", "#5B9BD5", "#ED7D31", "#A5A5A5", "#FFC000", "#4472C4", "#70AD47"];
+      return themes[colorObj.theme] || null;
+    }
+    return null;
   };
 
   // Excel読込
@@ -85,7 +103,8 @@ function App() {
           alert("SheetJSライブラリが読み込まれていません。");
           return;
         }
-        const wb = XLSX.read(evt.target.result, { type: "binary", cellNF: true, sheetStubs: true });
+        // スタイル情報を取得するため cellStyles: true を追加
+        const wb = XLSX.read(evt.target.result, { type: "binary", cellNF: true, sheetStubs: true, cellStyles: true });
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
@@ -115,16 +134,33 @@ function App() {
 
         let numCols = [];
         let dateCols = []; 
-        let ymCols = []; // 📌 年月項目用の配列
+        let ymCols = []; 
+        let disCols = []; // 📌 編集不可（▲）項目リスト
+        let colorsMap = {}; // 📌 フォントカラーマップ
         
         currentHeaders.forEach((h, i) => {
-          const cellAddress = XLSX.utils.encode_cell({ r: 2, c: i });
+          const cellAddress = XLSX.utils.encode_cell({ r: 0, c: i }); // 1行目 (r: 0)
           const cell = ws[cellAddress];
-          if (cell && cell.z) {
-            const formatStr = String(cell.z).toLowerCase();
+          
+          // 📌 1行目のセルの文字色を解析して保存
+          if (cell && cell.s && cell.s.font && cell.s.font.color) {
+            const parsedColor = parseExcelColor(cell.s.font.color);
+            if (parsedColor) {
+              colorsMap[h] = parsedColor;
+            }
+          }
+
+          // 📌 ▲が含まれる項目を編集不可としてマーク
+          if (h && h.includes("▲")) {
+            disCols.push(h);
+          }
+
+          // 3行目のデータからデータ型書式を判定
+          const dataCellAddress = XLSX.utils.encode_cell({ r: 2, c: i });
+          const dataCell = ws[dataCellAddress];
+          if (dataCell && dataCell.z) {
+            const formatStr = String(dataCell.z).toLowerCase();
             const hasNumberFormat = formatStr.includes("0") || formatStr.includes("#");
-            
-            // 📌 年月表記（yとmがあり、dが含まれない）のセル書式を判定
             const isYearMonth = formatStr.includes("y") && formatStr.includes("m") && !formatStr.includes("d");
             
             if (isYearMonth) {
@@ -143,7 +179,9 @@ function App() {
         });
         setNumericFields(numCols);
         setDateFields(dateCols); 
-        setYearMonthFields(ymCols); // 📌 年月判定結果を設定
+        setYearMonthFields(ymCols);
+        setDisabledFields(disCols); // 📌 状態を更新
+        setHeaderColors(colorsMap); // 📌 状態を更新
 
         const data = rows.slice(2).map(row => {
           let obj = {};
@@ -152,14 +190,13 @@ function App() {
           currentHeaders.forEach((h, i) => {
             let val = row[i] === undefined || row[i] === null ? "" : row[i];
             
-            // シリアル値の日付変換処理
             if (typeof val === "number" && val > 40000 && val < 50000 && !numCols.includes(h)) {
               const date = new Date((val - 25569) * 86400 * 1000);
               const y = date.getFullYear();
               const m = String(date.getMonth() + 1).padStart(2, "0");
               
               if (ymCols.includes(h)) {
-                val = `${y}/${m}`; // 📌 年月項目の場合は「yyyy/mm」の文字列にする
+                val = `${y}/${m}`; 
               } else {
                 const d = String(date.getDate()).padStart(2, "0");
                 val = `${y}/${m}/${d}`;
@@ -203,20 +240,17 @@ function App() {
       const cell = ws[cellRef];
       if (cell && cell.v && typeof cell.v === "string") {
         
-        // 📌 ① 年月形式（yyyy/mm）の出力復元処理
         if (cell.v.match(/^\d{4}\/\d{1,2}$/)) {
           const parts = cell.v.split("/");
           const year = Number(parts[0]);
           const month = Number(parts[1]);
-          // 年月のみの場合は、該当月の「1日」の昼12時を基準としてシリアル値を生成
           const dateObj = new Date(year, month - 1, 1, 12, 0, 0);
           if (!isNaN(dateObj.getTime())) {
             cell.t = "n"; 
             cell.v = Math.floor((dateObj.getTime() / (86400 * 1000)) + 25569); 
-            cell.z = "yyyy/mm"; // 📌 書式設定を年月表記に固定して出力
+            cell.z = "yyyy/mm"; 
           }
         } 
-        // ② 通常の日付形式（yyyy/mm/dd）の出力復元処理
         else if (cell.v.match(/^\d{4}\/\d{1,2}\/\d{1,2}/)) {
           const parts = cell.v.split("/");
           const year = Number(parts[0]);
@@ -294,7 +328,6 @@ function App() {
     );
   }
 
-  // 詳細画面用のカレントレコードを取得
   const currentRecord = records[selectedIndex];
 
   // 詳細画面
@@ -346,17 +379,21 @@ function App() {
           const currentFid = fields[i]; 
           
           const isHeading = h && h.includes("■");
+          // 📌 当該項目が編集不可（▲付き）かどうかを判定
+          const isDisabled = disabledFields.includes(h);
 
+          // 📌 ① 見出し項目（■）かつフォント色が取得できている場合は動的スタイルを適用
           if (isHeading) {
+            const customColor = headerColors[h];
+            const headingStyle = customColor ? { color: customColor, borderBottomColor: customColor } : {};
             return React.createElement("div", {
               key: i,
-              className: "card is-heading"
+              className: "card is-heading",
+              style: headingStyle
             }, h);
           }
 
-          // 通常の項目の場合
           const type = getInputType(h, rawValue);
-          // 📌 年月型（month）か通常日付型（date）かに応じてフォーマットを切り替える
           const value = (type === "date" || type === "month") ? formatDateForInput(rawValue, type === "month") : rawValue;
 
           const unitMatch = h && h.match(/『([^』]+)』/);
@@ -367,13 +404,15 @@ function App() {
 
           let inputElement;
 
+          // 📌 ② 各種コンポーネントに disabled={isDisabled} を付与して制御
           if (isBool(h)) {
-            inputElement = React.createElement("div", { className: "radio-row" },
+            inputElement = React.createElement("div", { className: `radio-row ${isDisabled ? "is-disabled" : ""}` },
               React.createElement("label", { className: "radio-item is-maru" },
                 React.createElement("input", {
                   type: "radio",
                   name: h,
                   checked: rawValue === "○",
+                  disabled: isDisabled, // 編集不可制御
                   onChange: () => updateValue(h, "○")
                 }),
                 React.createElement("span", null, "○")
@@ -383,6 +422,7 @@ function App() {
                   type: "radio",
                   name: h,
                   checked: rawValue === "×",
+                  disabled: isDisabled, // 編集不可制御
                   onChange: () => updateValue(h, "×")
                 }),
                 React.createElement("span", null, "×")
@@ -392,6 +432,7 @@ function App() {
             inputElement = React.createElement("select", {
               className: "select-box",
               value: rawValue,
+              disabled: isDisabled, // 編集不可制御
               onChange: (e) => updateValue(h, e.target.value)
             },
               React.createElement("option", { value: "" }, "-- 選択してください --"),
@@ -403,8 +444,8 @@ function App() {
             const inputField = React.createElement("input", {
               type: type,
               value: value,
+              disabled: isDisabled, // 編集不可制御
               onChange: (e) => {
-                // 📌 date型またはmonth型の場合は共通のチェンジハンドラへ送る
                 if (type === "date" || type === "month") {
                   handleDateChange(h, e.target.value, type === "month");
                 } else {
