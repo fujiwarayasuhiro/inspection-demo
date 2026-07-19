@@ -216,7 +216,7 @@ body {
   padding-right: 4px;
 }
 
-/* 📌 追加：▼リスト形式用のセレクトボックススタイル */
+/* 📌 ▼リスト形式用のセレクトボックススタイル */
 select.select-box {
   width: 100%;
   display: block;
@@ -245,7 +245,8 @@ select.select-box:focus {
 /* ✍️ 入力欄はみ出し防止 */
 input[type="text"],
 input[type="number"],
-input[type="date"] {
+input[type="date"],
+input[type="month"] {
   width: 100%;
   display: block;
   box-sizing: border-box;
@@ -259,7 +260,8 @@ input[type="date"] {
 
 input[type="text"]:focus,
 input[type="number"]:focus,
-input[type="date"]:focus {
+input[type="date"]:focus,
+input[type="month"]:focus {
   outline: none;
   border-color: #0078d4;
   background-color: #ffffff;
@@ -405,7 +407,6 @@ input[type="file"]::file-selector-button {
   .list-screen {
     padding-top: 60px;
   }
-  /* スマホ環境での詳細表示の固定エリア位置 */
   .detail-screen {
     padding-top: 200px;
   }
@@ -423,6 +424,7 @@ input[type="file"]::file-selector-button {
   input[type="text"],
   input[type="number"],
   input[type="date"],
+  input[type="month"],
   select.select-box {
     padding: 10px;
     font-size: 16px; 
@@ -432,7 +434,8 @@ input[type="file"]::file-selector-button {
     align-items: center;   
   }
 
-  input[type="date"]::-webkit-date-and-time-value {
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="month"]::-webkit-date-and-time-value {
     margin: 0;
     padding: 0;
     min-height: 1.5em;    
@@ -445,8 +448,9 @@ input[type="file"]::file-selector-button {
   }
 }
 
-/* 日付入力欄のiPhoneでの表示崩れ対策 */
-input[type="date"] {
+/* 日付・年月入力欄のiPhoneでの表示崩れ対策 */
+input[type="date"],
+input[type="month"] {
     -webkit-appearance: none;
     appearance: none;
     box-sizing: border-box; 
@@ -455,7 +459,8 @@ input[type="date"] {
     align-items: center;
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator {
     background-position: right;
     background-size: contain;
     cursor: pointer;
