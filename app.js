@@ -7,8 +7,10 @@ function App() {
   const [screen, setScreen] = useState("list");
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [numericFields, setNumericFields] = useState([]);
-  const [ dateFields, setDateFields] = useState([]);
+  const [dateFields, setDateFields] = useState([]);
   const [fileName, setFileName] = useState("");
+  // 📌 選択肢一覧データを格納するStateを追加
+  const [selectOptions, setSelectOptions] = useState({});
 
   // ○×判定
   const isBool = (label) => label && label.includes("○") && label.includes("×");
@@ -79,6 +81,27 @@ function App() {
         setHeaders(currentHeaders);
         setFields(currentFields);
 
+        // 📌 「選択肢一覧設定」シートが存在すればパースして読み込む
+        const optionsSheet = wb.Sheets["選択肢一覧設定"];
+        if (optionsSheet) {
+          const optRows = XLSX.utils.sheet_to_json(optionsSheet);
+          const optionsMap = {};
+          optRows.forEach(row => {
+            const fid = row["FID"];
+            const optionVal = row["選択肢"];
+            if (fid && optionVal) {
+              if (!optionsMap[fid]) {
+                optionsMap[fid] = [];
+              }
+              // 選択肢が重複して登録されないようにチェックしながら格納
+              if (!optionsMap[fid].includes(optionVal)) {
+                optionsMap[fid].push(optionVal);
+              }
+            }
+          });
+          setSelectOptions(optionsMap);
+        }
+
         let numCols = [];
         let dateCols = []; 
         currentHeaders.forEach((h, i) => {
@@ -137,11 +160,11 @@ function App() {
   const exportExcel = () => {
     if (!window.XLSX) return;
     
-    // 💡 内部データ状態のまま行データを作成（余計な単位文字列は付与しない）
+    // 内部データ状態のまま行データを作成（余計な単位文字列や選択肢データは付与しない）
     const dataRows = records.map(r => headers.map(h => r[h] === undefined || r[h] === null ? "" : r[h]));
 
     const ws = XLSX.utils.aoa_to_sheet([
-      headers, // ヘッダー項目名も読み込み時の一番最初の状態（『単位』が入ったまま）で出力
+      headers, // ヘッダー項目名も読み込み時の一番最初の状態で出力
       fields,
       ...dataRows 
     ]);
@@ -278,6 +301,7 @@ function App() {
       React.createElement("div", { className: "container" },
         headers.map((h, i) => {
           const rawValue = currentRecord[h] === undefined || currentRecord[h] === null ? "" : currentRecord[h];
+          const currentFid = fields[i]; // 現在の項目のFID
           
           // ■が含まれる見出し（カテゴリ区切り）の判定
           const isHeading = h && h.includes("■");
@@ -293,9 +317,13 @@ function App() {
           const type = getInputType(h, rawValue);
           const value = type === "date" ? formatDateForInput(rawValue) : rawValue;
 
-          // 📌 『』の記号が入っていれば単位文字を抽出する
+          // 『』の記号が入っていれば単位文字を抽出する
           const unitMatch = h && h.match(/『([^』]+)』/);
           const unitText = unitMatch ? unitMatch[1] : null;
+
+          // 📌 ▼の記号が入っているかつ該当FIDの選択肢リストが存在するか判定
+          const isSelect = h && h.includes("▼");
+          const hasOptions = currentFid && selectOptions[currentFid] && selectOptions[currentFid].length > 0;
 
           // 💡 入力コントロール要素の構築
           let inputElement;
@@ -321,7 +349,20 @@ function App() {
                 React.createElement("span", null, "×")
               )
             );
+          } else if (isSelect && hasOptions) {
+            // 📌 ▼項目かつ選択肢データが存在する場合はセレクトボックス（プルダウン）を描画
+            inputElement = React.createElement("select", {
+              className: "select-box",
+              value: rawValue,
+              onChange: (e) => updateValue(h, e.target.value)
+            },
+              React.createElement("option", { value: "" }, "-- 選択してください --"),
+              selectOptions[currentFid].map((opt, idx) => 
+                React.createElement("option", { key: idx, value: opt }, opt)
+              )
+            );
           } else {
+            // 通常のテキスト/数値/日付インプット
             const inputField = React.createElement("input", {
               type: type,
               value: value,
@@ -334,7 +375,7 @@ function App() {
               }
             });
 
-            // 📌 単位テキストが存在する場合は、入力ボックスの右側に接尾文字として配置
+            // 単位テキストが存在する場合は、入力ボックスの右側に接尾文字として配置
             if (unitText) {
               inputElement = React.createElement("div", { className: "input-with-unit" },
                 inputField,
