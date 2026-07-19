@@ -230,7 +230,7 @@ function App() {
           }
         }
       }
-    ]);
+    });
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
@@ -364,9 +364,6 @@ function App() {
 
           const isSelect = h && h.includes("▼");
           const hasOptions = currentFid && selectOptions[currentFid] && selectOptions[currentFid].length > 0;
-          
-          // 📌 項目名に「▲」が含まれている場合は編集不可（disabled）にする判定
-          const isDisabled = h && h.includes("▲");
 
           let inputElement;
 
@@ -377,8 +374,7 @@ function App() {
                   type: "radio",
                   name: h,
                   checked: rawValue === "○",
-                  disabled: isDisabled, // 📌 ▲があれば無効化
-                  onChange: () => { if (!isDisabled) updateValue(h, "○"); } // 📌 ▲があれば変更不可
+                  onChange: () => updateValue(h, "○")
                 }),
                 React.createElement("span", null, "○")
               ),
@@ -387,8 +383,7 @@ function App() {
                   type: "radio",
                   name: h,
                   checked: rawValue === "×",
-                  disabled: isDisabled, // 📌 ▲があれば無効化
-                  onChange: () => { if (!isDisabled) updateValue(h, "×"); } // 📌 ▲があれば変更不可
+                  onChange: () => updateValue(h, "×")
                 }),
                 React.createElement("span", null, "×")
               )
@@ -397,7 +392,6 @@ function App() {
             inputElement = React.createElement("select", {
               className: "select-box",
               value: rawValue,
-              disabled: isDisabled, // 📌 ▲があれば選択不可（グレーアウト）
               onChange: (e) => updateValue(h, e.target.value)
             },
               React.createElement("option", { value: "" }, "-- 選択してください --"),
@@ -409,7 +403,6 @@ function App() {
             const inputField = React.createElement("input", {
               type: type,
               value: value,
-              disabled: isDisabled, // 📌 ▲があれば入力不可（グレーアウト）
               onChange: (e) => {
                 // 📌 date型またはmonth型の場合は共通のチェンジハンドラへ送る
                 if (type === "date" || type === "month") {
