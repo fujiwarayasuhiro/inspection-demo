@@ -42,10 +42,10 @@ function App() {
       const y = date.getFullYear();
       const m = String(date.getMonth() + 1).padStart(2, "0");
       if (isMonthType) {
-        return `${y}-${m}`; // month型は yyyy-mm 形式が必要
+        return `${y}-${m}`; // month型は yyyy-mm 形式必要
       }
       const d = String(date.getDate()).padStart(2, "0");
-      return `${y}-${m}-${d}`; // date型は yyyy-mm-dd 形式が必要
+      return `${y}-${m}-${d}`; // date型は yyyy-mm-dd 形式必要
     }
     if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) {
       const parts = value.split("/");
@@ -342,6 +342,11 @@ function App() {
 
       React.createElement("div", { className: "container" },
         headers.map((h, i) => {
+          // 📌 項目名に「◆」が含まれている場合は非表示（何もレンダリングしない）
+          if (h && h.includes("◆")) {
+            return null;
+          }
+
           const rawValue = currentRecord[h] === undefined || currentRecord[h] === null ? "" : currentRecord[h];
           const currentFid = fields[i]; 
           
