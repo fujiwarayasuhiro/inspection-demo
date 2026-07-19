@@ -209,7 +209,7 @@ function App() {
 
     if (errors.length > 0) {
       setErrorIndices(errors);
-      alert("必須入力項目で未入力箇所があります");
+      alert("必須項目で未入力または未選択箇所があります");
       return; // 画面遷移をストップ
     }
 
