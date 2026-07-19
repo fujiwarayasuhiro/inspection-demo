@@ -44,7 +44,7 @@ body {
   box-sizing: border-box;
 }
 
-/* 📌 詳細画面の上部固定エリア */
+/* 📌 詳細画面の上部固定エリア（フローティングバナー追加に伴い余白を拡大） */
 .detail-screen {
   padding-top: 230px;
 }
@@ -56,8 +56,8 @@ body {
   right: 0;
   z-index: 100;
   background: #f4f6f9;
-  padding-top: 55px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding-top: 55px; /* ヘッダーの高さ分下げる */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* 境界をわかりやすく */
 }
 
 /* 📌 アクションバーの配置 */
@@ -91,7 +91,7 @@ body {
   justify-content: flex-end;
 }
 
-/* 📌 点検完了チェックボックス */
+/* 📌 点検完了チェックボックスのスタイル */
 .complete-checkbox-label {
   display: flex;
   align-items: center;
@@ -109,7 +109,7 @@ body {
   margin: 0;
 }
 
-/* 🔙 戻るボタン */
+/* 🔙 戻るボタンのデザイン */
 .button-back {
   display: inline-block;
   padding: 8px 16px;
@@ -129,7 +129,7 @@ body {
   transform: translateY(1px);
 }
 
-/* 📌 フローティングバナー */
+/* 📌 フローティングバナー（固定表示カード）のスタイル */
 .floating-card-container {
   max-width: 420px;
   margin: auto;
@@ -138,8 +138,8 @@ body {
 }
 
 .floating-card {
-  background: #edf1f5;
-  border: 1px solid #ccd4dc;
+  background: #edf1f5; /* 固定用として少し色をグレーに変更 */
+  border: 1px solid #ccd4dc; /* 枠線を少し強調 */
   border-radius: 12px;
   padding: 12px;
   font-size: 14px;
@@ -148,9 +148,10 @@ body {
   line-height: 1.4;
 }
 
+/* 点検完了時のフローティングバナー枠色 */
 .floating-card.is-completed {
   border: 2px solid #2e7d32;
-  background: #e8f5e9;
+  background: #e8f5e9; /* 完了時は薄い緑 */
 }
 
 /* 📦 通常カードデザイン */
@@ -166,6 +167,7 @@ body {
   transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
 }
 
+/* 📌 点検完了時のカードスタイル */
 .card.is-completed {
   border: 2px solid #2e7d32;
   background: #e8f5e9; 
@@ -179,18 +181,18 @@ body {
   color: #444;
 }
 
-/* 📌 ■が含まれる見出し（デフォルト色はJavaScript側で上書き可能にします） */
+/* 📌 ■が含まれる見出し（カテゴリ区切り）のスタイル */
 .card.is-heading {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 16px 4px 4px 4px;
+  background: transparent; /* 背景を透明に */
+  border: none;            /* 枠線を消す */
+  box-shadow: none;        /* シャドウを消す */
+  padding: 16px 4px 4px 4px; /* 余白の調整 */
   margin-bottom: 8px;
-  margin-top: 12px;
+  margin-top: 12px;        /* 上に隙間をあけて区切りを強調 */
   font-size: 16px;
   font-weight: bold;
-  color: #0078d4; /* 予備色 */
-  border-bottom: 2px solid #0078d4;
+  color: #0078d4;          /* メインの青色で強調 */
+  border-bottom: 2px solid #0078d4; /* 下線をつけてさらに分かりやすく */
   border-radius: 0;
 }
 
@@ -203,14 +205,14 @@ body {
 }
 
 .input-with-unit input {
-  flex: 1;
+  flex: 1; /* 入力欄を可能な限り広げる */
 }
 
 .input-unit-text {
   font-size: 15px;
   font-weight: bold;
   color: #555;
-  white-space: nowrap;
+  white-space: nowrap; /* 単位の改行を防止 */
   padding-right: 4px;
 }
 
@@ -225,22 +227,22 @@ select.select-box {
   border-radius: 8px;
   background-color: #ffffff;
   transition: all 0.2s ease;
-  appearance: none;
+  appearance: none; /* デフォルトの矢印を非表示に */
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 16px;
-  padding-right: 40px;
+  padding-right: 40px; /* 矢印と文字が被らないように右余白を確保 */
   cursor: pointer;
 }
 
-select.select-box:focus:not(:disabled) {
+select.select-box:focus {
   outline: none;
   border-color: #0078d4;
   box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.15);
 }
 
-/* ✍️ 入力欄共通 */
+/* ✍️ 入力欄はみ出し防止 */
 input[type="text"],
 input[type="number"],
 input[type="date"],
@@ -256,32 +258,14 @@ input[type="month"] {
   transition: all 0.2s ease;
 }
 
-input[type="text"]:focus:not(:disabled),
-input[type="number"]:focus:not(:disabled),
-input[type="date"]:focus:not(:disabled),
-input[type="month"]:focus:not(:disabled) {
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="month"]:focus {
   outline: none;
   border-color: #0078d4;
   background-color: #ffffff;
   box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.15);
-}
-
-/* 📌 編集不可項目（▲）用のグレーアウトスタイル */
-input:disabled,
-select.select-box:disabled {
-  background-color: #e9ecef !important;
-  color: #6c757d !important;
-  border-color: #ced4da !important;
-  cursor: not-allowed;
-}
-
-.radio-row.is-disabled {
-  cursor: not-allowed;
-  opacity: 0.65;
-}
-.radio-row.is-disabled .radio-item {
-  cursor: not-allowed;
-  background: #e9ecef;
 }
 
 /* 🔘 ラジオボタン基本構造 */
@@ -317,7 +301,7 @@ select.select-box:disabled {
   margin: 0;
 }
 
-/* 🟢 ○（緑色） */
+/* 🟢 ○（緑色）のスタイル */
 .radio-item.is-maru input[type="radio"] {
   accent-color: #2e7d32;
 }
@@ -327,7 +311,7 @@ select.select-box:disabled {
   color: #2e7d32;
 }
 
-/* 🔴 ×（赤色） */
+/* 🔴 ×（赤色）のスタイル */
 .radio-item.is-batsu input[type="radio"] {
   accent-color: #d32f2f;
 }
@@ -362,7 +346,7 @@ select.select-box:disabled {
   background: #0066b3;
 }
 
-/* 📁 ファイルアップロード */
+/* 📁 ファイルアップロード（点線デザイン） */
 .file-wrapper-box {
   background: #fff;
   border: 1px dashed #ccd4dc; 
@@ -389,6 +373,7 @@ input[type="file"]::file-selector-button {
   cursor: pointer;
 }
 
+/* 🔙 「戻る」で表示される、消えないファイル表示枠 */
 .fake-file-input {
   display: flex;
   align-items: center;
@@ -463,6 +448,7 @@ input[type="file"]::file-selector-button {
   }
 }
 
+/* 日付・年月入力欄のiPhoneでの表示崩れ対策 */
 input[type="date"],
 input[type="month"] {
     -webkit-appearance: none;
