@@ -402,6 +402,47 @@ input[type="file"]::file-selector-button {
   flex: 1;
 }
 
+/* カード全体の背景を薄いグレーにし、操作不可のカーソルにする */
+.card.is-disabled-card {
+  background-color: #f0f2f5;
+  border-color: #dcdcdc;
+  box-shadow: none;
+}
+
+/* タイトル文字の色を薄くする */
+.card.is-disabled-card .card-title {
+  color: #888888;
+}
+
+/* テキスト、数値、日付、セレクトボックスのグレーアウト */
+input:disabled,
+select:disabled {
+  background-color: #e4e7eb !important;
+  color: #777777 !important;
+  border-color: #ccd4dc !important;
+  cursor: not-allowed;
+  opacity: 1; /* iOSでの文字薄れ防止 */
+  -webkit-text-fill-color: #777777; /* iOSでの文字色固定 */
+}
+
+/* ラジオボタン枠のグレーアウト */
+.radio-item.is-disabled {
+  background-color: #e4e7eb;
+  color: #aaaaaa;
+  cursor: not-allowed;
+  border-color: transparent !important;
+}
+
+/* ラジオボタン自体の操作無効化 */
+.radio-item.is-disabled input[type="radio"] {
+  cursor: not-allowed;
+}
+
+/* 単位テキストの色も薄くする */
+.card.is-disabled-card .input-unit-text {
+  color: #888888;
+}
+
 /* 📱 スマホ最適化 */
 @media (max-width: 480px) {
   .list-screen {
