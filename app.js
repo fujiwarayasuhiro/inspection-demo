@@ -483,9 +483,23 @@ function App() {
               React.createElement("div", { className: "card-title" }, h),
               isRequired && React.createElement("span", { className: "required-badge" }, "必須") // 📌 必須バッジ表示
             ),
-            inputElement,
-            hasError && React.createElement("div", { className: "error-message-text" }, "未入力です") // 📌 未入力エラーメッセージ表示
-          );
+            // 📌 エラーメッセージの文言をタイプ別に判定
+            // ラジオボタン(isBool)、プルダウン(isSelect)、日付・年月(date/month) は「未選択です」
+            const isSelectionType = isBool(h) || isSelect || type === "date" || type === "month";
+            const errorMessage = isSelectionType ? "未選択です" : "未入力です";
+
+            return React.createElement("div", {
+              key: i,
+              className: `card ${isDisabled ? "is-disabled-card" : ""} ${hasError ? "card-error" : ""}`
+            },
+              React.createElement("div", { className: "card-title-row" },
+                React.createElement("div", { className: "card-title" }, h),
+                isRequired && React.createElement("span", { className: "required-badge" }, "必須")
+              ),
+              inputElement,
+              // 📌 判定したメッセージ文言（未選択です / 未入力です）を動的に表示
+              hasError && React.createElement("div", { className: "error-message-text" }, errorMessage)
+            );
         })
       )
     )
