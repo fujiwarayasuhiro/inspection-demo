@@ -15,10 +15,6 @@ function App() {
   // 📌 エラーが発生した項目（インデックス番号）を保持するStateを追加
   const [errorIndices, setErrorIndices] = useState([]);
 
-  // 📌 入力条件設定のデータを保持するStateを追加
-  // 構造: { [表示対象のFID]: [ { targetFid, value, groupId }, ... ] }
-  const [displayConditions, setDisplayConditions] = useState({});
-
   // ○×判定
   const isBool = (label) => label && label.includes("○") && label.includes("×");
 
@@ -97,9 +93,8 @@ function App() {
 
         if (!rows || rows.length === 0) return;
 
-        // 🛠️ ヘッダーやFIDの文字列前後の空白をトリムして予期せぬ不一致を防ぐ
-        const currentHeaders = (rows[0] || []).map(h => h ? String(h).trim() : "");
-        const currentFields = (rows[1] || []).map(f => f ? String(f).trim() : "");
+        const currentHeaders = rows[0] || [];
+        const currentFields = rows[1] || [];
         
         setHeaders(currentHeaders);
         setFields(currentFields);
@@ -110,39 +105,14 @@ function App() {
           const optRows = XLSX.utils.sheet_to_json(optionsSheet);
           const optionsMap = {};
           optRows.forEach(row => {
-            const fid = row["FID"] ? String(row["FID"]).trim() : null;
-            const optionVal = row["選択肢"] ? String(row["選択肢"]).trim() : null;
+            const fid = row["FID"];
+            const optionVal = row["選択肢"];
             if (fid && optionVal) {
               if (!optionsMap[fid]) optionsMap[fid] = [];
               if (!optionsMap[fid].includes(optionVal)) optionsMap[fid].push(optionVal);
             }
           });
           setSelectOptions(optionsMap);
-        }
-
-        // 📌 「入力条件設定」シートの読込処理を追加
-        const conditionSheet = wb.Sheets["入力条件設定"];
-        if (conditionSheet) {
-          const condRows = XLSX.utils.sheet_to_json(conditionSheet);
-          const condMap = {};
-          
-          condRows.forEach(row => {
-            const displayFid = row["表示対象のFID"] || row["表示対象FID"] || row["FID"]; 
-            const targetFid = row["条件元のFID"] || row["条件元FID"];
-            const condValue = row["選択肢"] || row["値"];
-            const groupId = row["グループID"] || row["グループid"] || "";
-
-            if (displayFid && targetFid && condValue !== undefined) {
-              const dFid = String(displayFid).trim();
-              if (!condMap[dFid]) condMap[dFid] = [];
-              condMap[dFid].push({
-                targetFid: String(targetFid).trim(),
-                value: String(condValue).trim(),
-                groupId: groupId ? String(groupId).trim() : null
-              });
-            }
-          });
-          setDisplayConditions(condMap);
         }
 
         let numCols = [];
@@ -227,14 +197,6 @@ function App() {
       // 非表示項目(◆)や見出し(■)はチェック対象外
       if ((h && h.includes("◆")) || (h && h.includes("■"))) return;
 
-      // 📌 非表示の項目は必須入力チェックの対象外とする
-      if (h && h.includes("★")) {
-        const currentFid = fields[i];
-        if (!checkDisplayCondition(currentFid, currentRec)) {
-          return; // 非表示なのでチェックをスキップ
-        }
-      }
-
       // 「※」が含まれていて、値が空の場合
       const isRequired = h && h.includes("※");
       const value = currentRec[h];
@@ -305,54 +267,6 @@ function App() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
     XLSX.writeFile(wb, "result.xlsx");
-  };
-
-  // 📌 該当項目が表示条件を満たしているかを判定するヘルパー関数
-  const checkDisplayCondition = (fid, currentRec) => {
-    if (!fid) return false;
-    const cleanFid = String(fid).trim();
-    const conditions = displayConditions[cleanFid];
-    
-    // 🛠️ 改善: 条件自体が全く設定されていない項目は「常に表示（true）」に戻す
-    // これにより、条件設定に記載がない通常の★項目が消えてしまうのを防ぎます
-    if (!conditions || conditions.length === 0) return true;
-
-    // FIDから項目名（ヘッダー文字列）を逆引きするヘルパー
-    const getHeaderByFid = (targetFid) => {
-      const idx = fields.indexOf(String(targetFid).trim());
-      return idx !== -1 ? headers[idx] : null;
-    };
-
-    // 各条件が現在「合致(True)」しているかを評価
-    const evaluatedConditions = conditions.map(cond => {
-      const headerName = getHeaderByFid(cond.targetFid);
-      if (!headerName) return false;
-      const currentVal = String(currentRec[headerName] || "").trim();
-      return currentVal === cond.value;
-    });
-
-    // グループID（AND条件）ごとにまとめる
-    const groupResults = {};
-    let noGroupMatch = false; // グループなし条件で1つでも合致したか
-
-    conditions.forEach((cond, idx) => {
-      const isMatch = evaluatedConditions[idx];
-      if (cond.groupId) {
-        if (!groupResults[cond.groupId]) groupResults[cond.groupId] = [];
-        groupResults[cond.groupId].push(isMatch);
-      } else {
-        if (isMatch) noGroupMatch = true;
-      }
-    });
-
-    // ANDグループの判定：グループ内のすべての条件が true であるかをチェック
-    const andGroupMatch = Object.keys(groupResults).some(gId => {
-      const results = groupResults[gId];
-      return results.length > 0 && results.every(r => r === true);
-    });
-
-    // いずれかの条件を満たしていれば表示 (true)
-    return noGroupMatch || andGroupMatch;
   };
 
   // 高速化キャッシュ処理
@@ -466,17 +380,9 @@ function App() {
             return null;
           }
 
-          const currentFid = fields[i]; 
-
-          // 📌 【新機能】「★」が含まれている項目の表示条件判定
-          if (h && h.includes("★")) {
-            // 条件を満たしていない場合は画面上に描画しない（nullを返す）
-            if (!checkDisplayCondition(currentFid, currentRecord)) {
-              return null;
-            }
-          }
-
           const rawValue = currentRecord[h] === undefined || currentRecord[h] === null ? "" : currentRecord[h];
+          const currentFid = fields[i]; 
+          
           const isHeading = h && h.includes("■");
 
           if (isHeading) {
