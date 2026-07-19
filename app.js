@@ -8,8 +8,9 @@ function App() {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [numericFields, setNumericFields] = useState([]);
   const [dateFields, setDateFields] = useState([]);
+  // 📌 年月（yyyy/mm）項目を保持するStateを追加
+  const [yearMonthFields, setYearMonthFields] = useState([]);
   const [fileName, setFileName] = useState("");
-  // 📌 選択肢一覧データを格納するStateを追加
   const [selectOptions, setSelectOptions] = useState({});
 
   // ○×判定
@@ -17,40 +18,55 @@ function App() {
 
   // 入力タイプ判定
   const getInputType = (headerName, value) => {
+    if (yearMonthFields.includes(headerName)) return "month"; // 📌 年月項目の場合はHTMLのmonthタイプを使用
     if (dateFields.includes(headerName)) return "date";
     if (numericFields.includes(headerName)) return "number";
     if (!value) return "text";
     
     if (typeof value === "number" && value > 40000 && value < 50000) return "date";
-    if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) return "date";
+    if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) {
+      // 読み込み時文字列かつスラッシュ2個（日含む）か1個（年月のみ）かで分岐可能
+      return value.split("/").length === 2 ? "month" : "date";
+    }
     
     if (typeof value === "number" || (typeof value === "string" && /^-?\d+(\.\d+)?$/.test(value))) return "number";
 
     return "text";
   };
   
-  function formatDateForInput(value) {
+  // 📌 画面表示・入力欄（<input type="date/month">）に渡す値のフォーマット変換
+  function formatDateForInput(value, isMonthType = false) {
     if (!value) return "";
     if (typeof value === "number") {
       const date = new Date((value - 25569) * 86400 * 1000);
-      return date.toISOString().substring(0, 10);
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      if (isMonthType) {
+        return `${y}-${m}`; // month型は yyyy-mm 形式が必要
+      }
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`; // date型は yyyy-mm-dd 形式が必要
     }
     if (typeof value === "string" && value.match(/^\d{4}\/\d{1,2}/)) {
       const parts = value.split("/");
       const y = parts[0];
       const m = (parts[1] || "").padStart(2, "0");
+      if (isMonthType) {
+        return `${y}-${m}`;
+      }
       const d = (parts[2] || "01").padStart(2, "0");
       return `${y}-${m}-${d}`;
     }
     return value;
   }
 
-  const handleDateChange = (key, rawValue) => {
+  // 📌 画面で日付・年月が変更された際のデータ保存処理
+  const handleDateChange = (key, rawValue, isMonthType = false) => {
     if (!rawValue) {
       updateValue(key, "");
       return;
     }
-    const formatted = rawValue.replace(/-/g, "/");
+    const formatted = rawValue.replace(/-/g, "/"); // yyyy-mm を yyyy/mm に置換
     updateValue(key, formatted);
   };
 
@@ -81,7 +97,7 @@ function App() {
         setHeaders(currentHeaders);
         setFields(currentFields);
 
-        // 📌 「選択肢一覧設定」シートが存在すればパースして読み込む
+        // 選択肢一覧設定シートの読込
         const optionsSheet = wb.Sheets["選択肢一覧設定"];
         if (optionsSheet) {
           const optRows = XLSX.utils.sheet_to_json(optionsSheet);
@@ -90,13 +106,8 @@ function App() {
             const fid = row["FID"];
             const optionVal = row["選択肢"];
             if (fid && optionVal) {
-              if (!optionsMap[fid]) {
-                optionsMap[fid] = [];
-              }
-              // 選択肢が重複して登録されないようにチェックしながら格納
-              if (!optionsMap[fid].includes(optionVal)) {
-                optionsMap[fid].push(optionVal);
-              }
+              if (!optionsMap[fid]) optionsMap[fid] = [];
+              if (!optionsMap[fid].includes(optionVal)) optionsMap[fid].push(optionVal);
             }
           });
           setSelectOptions(optionsMap);
@@ -104,23 +115,35 @@ function App() {
 
         let numCols = [];
         let dateCols = []; 
+        let ymCols = []; // 📌 年月項目用の配列
+        
         currentHeaders.forEach((h, i) => {
           const cellAddress = XLSX.utils.encode_cell({ r: 2, c: i });
           const cell = ws[cellAddress];
           if (cell && cell.z) {
             const formatStr = String(cell.z).toLowerCase();
             const hasNumberFormat = formatStr.includes("0") || formatStr.includes("#");
-            const isNotDate = !formatStr.includes("y") && !formatStr.includes("m") && !formatStr.includes("d");
-            if (hasNumberFormat && isNotDate) numCols.push(h);
+            
+            // 📌 年月表記（yとmがあり、dが含まれない）のセル書式を判定
+            const isYearMonth = formatStr.includes("y") && formatStr.includes("m") && !formatStr.includes("d");
+            
+            if (isYearMonth) {
+              ymCols.push(h);
+            } else {
+              const hasNumber = hasNumberFormat;
+              const isNotDate = !formatStr.includes("y") && !formatStr.includes("m") && !formatStr.includes("d");
+              if (hasNumber && isNotDate) numCols.push(h);
 
-            const isRealDate = (formatStr.includes("y") || formatStr.includes("m") || formatStr.includes("d")) && !hasNumberFormat;
-            if (isRealDate) {
-              dateCols.push(h);
+              const isRealDate = (formatStr.includes("y") || formatStr.includes("m") || formatStr.includes("d")) && !hasNumberFormat;
+              if (isRealDate) {
+                dateCols.push(h);
+              }
             }
           }
         });
         setNumericFields(numCols);
         setDateFields(dateCols); 
+        setYearMonthFields(ymCols); // 📌 年月判定結果を設定
 
         const data = rows.slice(2).map(row => {
           let obj = {};
@@ -128,12 +151,19 @@ function App() {
 
           currentHeaders.forEach((h, i) => {
             let val = row[i] === undefined || row[i] === null ? "" : row[i];
+            
+            // シリアル値の日付変換処理
             if (typeof val === "number" && val > 40000 && val < 50000 && !numCols.includes(h)) {
               const date = new Date((val - 25569) * 86400 * 1000);
               const y = date.getFullYear();
               const m = String(date.getMonth() + 1).padStart(2, "0");
-              const d = String(date.getDate()).padStart(2, "0");
-              val = `${y}/${m}/${d}`;
+              
+              if (ymCols.includes(h)) {
+                val = `${y}/${m}`; // 📌 年月項目の場合は「yyyy/mm」の文字列にする
+              } else {
+                const d = String(date.getDate()).padStart(2, "0");
+                val = `${y}/${m}/${d}`;
+              }
             }
             obj[h] = val;
           });
@@ -160,11 +190,10 @@ function App() {
   const exportExcel = () => {
     if (!window.XLSX) return;
     
-    // 内部データ状態のまま行データを作成（余計な単位文字列や選択肢データは付与しない）
     const dataRows = records.map(r => headers.map(h => r[h] === undefined || r[h] === null ? "" : r[h]));
 
     const ws = XLSX.utils.aoa_to_sheet([
-      headers, // ヘッダー項目名も読み込み時の一番最初の状態で出力
+      headers, 
       fields,
       ...dataRows 
     ]);
@@ -172,16 +201,33 @@ function App() {
     Object.keys(ws).forEach(cellRef => {
       if (cellRef.startsWith("!")) return;
       const cell = ws[cellRef];
-      if (cell && cell.v && typeof cell.v === "string" && cell.v.match(/^\d{4}\/\d{1,2}\/\d{1,2}/)) {
-        const parts = cell.v.split("/");
-        const year = Number(parts[0]);
-        const month = Number(parts[1]);
-        const day = Number(parts[2]);
-        const dateObj = new Date(year, month - 1, day, 12, 0, 0);
-        if (!isNaN(dateObj.getTime())) {
-          cell.t = "n"; 
-          cell.v = Math.floor((dateObj.getTime() / (86400 * 1000)) + 25569); 
-          cell.z = "yyyy/mm/dd"; 
+      if (cell && cell.v && typeof cell.v === "string") {
+        
+        // 📌 ① 年月形式（yyyy/mm）の出力復元処理
+        if (cell.v.match(/^\d{4}\/\d{1,2}$/)) {
+          const parts = cell.v.split("/");
+          const year = Number(parts[0]);
+          const month = Number(parts[1]);
+          // 年月のみの場合は、該当月の「1日」の昼12時を基準としてシリアル値を生成
+          const dateObj = new Date(year, month - 1, 1, 12, 0, 0);
+          if (!isNaN(dateObj.getTime())) {
+            cell.t = "n"; 
+            cell.v = Math.floor((dateObj.getTime() / (86400 * 1000)) + 25569); 
+            cell.z = "yyyy/mm"; // 📌 書式設定を年月表記に固定して出力
+          }
+        } 
+        // ② 通常の日付形式（yyyy/mm/dd）の出力復元処理
+        else if (cell.v.match(/^\d{4}\/\d{1,2}\/\d{1,2}/)) {
+          const parts = cell.v.split("/");
+          const year = Number(parts[0]);
+          const month = Number(parts[1]);
+          const day = Number(parts[2]);
+          const dateObj = new Date(year, month - 1, day, 12, 0, 0);
+          if (!isNaN(dateObj.getTime())) {
+            cell.t = "n"; 
+            cell.v = Math.floor((dateObj.getTime() / (86400 * 1000)) + 25569); 
+            cell.z = "yyyy/mm/dd"; 
+          }
         }
       }
     });
@@ -248,7 +294,7 @@ function App() {
     );
   }
 
-  // 詳細画面用のカレントレコードの情報を取得
+  // 詳細画面用のカレントレコードを取得
   const currentRecord = records[selectedIndex];
 
   // 詳細画面
@@ -260,18 +306,15 @@ function App() {
           "点検詳細入力"
         ),
         React.createElement("div", { className: "action-bar" },
-          // 左端：← 戻るボタン
           React.createElement("div", { className: "action-left" },
             React.createElement("button", {
               className: "button-back",
               onClick: () => setScreen("list")
             }, "← 戻る")
           ),
-          // 中央：XX ／ XX 件数表示
           React.createElement("div", { className: "action-center" },
             `${selectedIndex + 1} ／ ${records.length}`
           ),
-          // 右端：点検完了チェックボックス
           React.createElement("div", { className: "action-right" },
             React.createElement("label", { className: "complete-checkbox-label" },
               React.createElement("input", {
@@ -284,7 +327,6 @@ function App() {
           )
         ),
         
-        // ナビゲーションバー直下のフローティングバナー
         React.createElement("div", { className: "floating-card-container" },
           React.createElement("div", { 
             className: `floating-card ${currentRecord._isCompleted ? "is-completed" : ""}` 
@@ -301,9 +343,8 @@ function App() {
       React.createElement("div", { className: "container" },
         headers.map((h, i) => {
           const rawValue = currentRecord[h] === undefined || currentRecord[h] === null ? "" : currentRecord[h];
-          const currentFid = fields[i]; // 現在の項目のFID
+          const currentFid = fields[i]; 
           
-          // ■が含まれる見出し（カテゴリ区切り）の判定
           const isHeading = h && h.includes("■");
 
           if (isHeading) {
@@ -315,17 +356,15 @@ function App() {
 
           // 通常の項目の場合
           const type = getInputType(h, rawValue);
-          const value = type === "date" ? formatDateForInput(rawValue) : rawValue;
+          // 📌 年月型（month）か通常日付型（date）かに応じてフォーマットを切り替える
+          const value = (type === "date" || type === "month") ? formatDateForInput(rawValue, type === "month") : rawValue;
 
-          // 『』の記号が入っていれば単位文字を抽出する
           const unitMatch = h && h.match(/『([^』]+)』/);
           const unitText = unitMatch ? unitMatch[1] : null;
 
-          // 📌 ▼の記号が入っているかつ該当FIDの選択肢リストが存在するか判定
           const isSelect = h && h.includes("▼");
           const hasOptions = currentFid && selectOptions[currentFid] && selectOptions[currentFid].length > 0;
 
-          // 💡 入力コントロール要素の構築
           let inputElement;
 
           if (isBool(h)) {
@@ -350,7 +389,6 @@ function App() {
               )
             );
           } else if (isSelect && hasOptions) {
-            // 📌 ▼項目かつ選択肢データが存在する場合はセレクトボックス（プルダウン）を描画
             inputElement = React.createElement("select", {
               className: "select-box",
               value: rawValue,
@@ -362,20 +400,19 @@ function App() {
               )
             );
           } else {
-            // 通常のテキスト/数値/日付インプット
             const inputField = React.createElement("input", {
               type: type,
               value: value,
               onChange: (e) => {
-                if (type === "date") {
-                  handleDateChange(h, e.target.value);
+                // 📌 date型またはmonth型の場合は共通のチェンジハンドラへ送る
+                if (type === "date" || type === "month") {
+                  handleDateChange(h, e.target.value, type === "month");
                 } else {
                   updateValue(h, e.target.value);
                 }
               }
             });
 
-            // 単位テキストが存在する場合は、入力ボックスの右側に接尾文字として配置
             if (unitText) {
               inputElement = React.createElement("div", { className: "input-with-unit" },
                 inputField,
