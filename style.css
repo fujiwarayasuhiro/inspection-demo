@@ -443,6 +443,70 @@ select:disabled {
   color: #888888;
 }
 
+/* 項目タイトルとバッジを綺麗に横並びにする */
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* 両端に寄せる */
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* card-title-rowの中のタイトルは下部マージンをリセット */
+.card-title-row .card-title {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+/* 「必須」の赤色の白抜きバッジ */
+.required-badge {
+  background-color: #d32f2f;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 3px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* 未入力エラー時のカード枠線（うっすら赤くする） */
+.card.card-error {
+  border: 1px solid #ffcdd2;
+  background-color: #fffbbfb; /* ほんのり赤みがかった背景 */
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.05);
+}
+
+/* 未入力エラー時の入力フォーム枠線 */
+input.input-error,
+select.input-error {
+  border-color: #d32f2f !important;
+  background-color: #fff8f8;
+}
+
+/* 未入力エラー時用のフォーカス */
+input.input-error:focus,
+select.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.15) !important;
+}
+
+/* 項目下部に表示される「未入力です」のテキスト */
+.error-message-text {
+  color: #d32f2f;
+  font-size: 13px;
+  font-weight: bold;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+}
+
+/* エラーメッセージの前に簡易な警告マークを付与 */
+.error-message-text::before {
+  content: "⚠️";
+  margin-right: 4px;
+  font-size: 12px;
+}
+
 /* 📱 スマホ最適化 */
 @media (max-width: 480px) {
   .list-screen {
