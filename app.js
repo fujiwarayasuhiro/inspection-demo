@@ -97,8 +97,9 @@ function App() {
 
         if (!rows || rows.length === 0) return;
 
-        const currentHeaders = rows[0] || [];
-        const currentFields = rows[1] || [];
+        // 🛠️ ヘッダーやFIDの文字列前後の空白をトリムして予期せぬ不一致を防ぐ
+        const currentHeaders = (rows[0] || []).map(h => h ? String(h).trim() : "");
+        const currentFields = (rows[1] || []).map(f => f ? String(f).trim() : "");
         
         setHeaders(currentHeaders);
         setFields(currentFields);
@@ -109,8 +110,8 @@ function App() {
           const optRows = XLSX.utils.sheet_to_json(optionsSheet);
           const optionsMap = {};
           optRows.forEach(row => {
-            const fid = row["FID"];
-            const optionVal = row["選択肢"];
+            const fid = row["FID"] ? String(row["FID"]).trim() : null;
+            const optionVal = row["選択肢"] ? String(row["選択肢"]).trim() : null;
             if (fid && optionVal) {
               if (!optionsMap[fid]) optionsMap[fid] = [];
               if (!optionsMap[fid].includes(optionVal)) optionsMap[fid].push(optionVal);
@@ -122,21 +123,19 @@ function App() {
         // 📌 「入力条件設定」シートの読込処理を追加
         const conditionSheet = wb.Sheets["入力条件設定"];
         if (conditionSheet) {
-          // 列の並び順が不定でも対応できるように raw: true で取得して処理
           const condRows = XLSX.utils.sheet_to_json(conditionSheet);
           const condMap = {};
           
           condRows.forEach(row => {
-            // A列: 表示対象のFID, B列: 条件元のFID, C列: 選択肢, F列: グループID
-            // ※ヘッダー名が日本語や英語のケースに対応できるようキー名を確認
             const displayFid = row["表示対象のFID"] || row["表示対象FID"] || row["FID"]; 
             const targetFid = row["条件元のFID"] || row["条件元FID"];
             const condValue = row["選択肢"] || row["値"];
             const groupId = row["グループID"] || row["グループid"] || "";
 
             if (displayFid && targetFid && condValue !== undefined) {
-              if (!condMap[displayFid]) condMap[displayFid] = [];
-              condMap[displayFid].push({
+              const dFid = String(displayFid).trim();
+              if (!condMap[dFid]) condMap[dFid] = [];
+              condMap[dFid].push({
                 targetFid: String(targetFid).trim(),
                 value: String(condValue).trim(),
                 groupId: groupId ? String(groupId).trim() : null
@@ -310,13 +309,17 @@ function App() {
 
   // 📌 該当項目が表示条件を満たしているかを判定するヘルパー関数
   const checkDisplayCondition = (fid, currentRec) => {
-    const conditions = displayConditions[fid];
-    // 条件が設定されていない場合は、デフォルトで「非表示」とする（安全側倒し）
-    if (!conditions || conditions.length === 0) return false;
+    if (!fid) return false;
+    const cleanFid = String(fid).trim();
+    const conditions = displayConditions[cleanFid];
+    
+    // 🛠️ 改善: 条件自体が全く設定されていない項目は「常に表示（true）」に戻す
+    // これにより、条件設定に記載がない通常の★項目が消えてしまうのを防ぎます
+    if (!conditions || conditions.length === 0) return true;
 
     // FIDから項目名（ヘッダー文字列）を逆引きするヘルパー
     const getHeaderByFid = (targetFid) => {
-      const idx = fields.indexOf(targetFid);
+      const idx = fields.indexOf(String(targetFid).trim());
       return idx !== -1 ? headers[idx] : null;
     };
 
@@ -329,7 +332,6 @@ function App() {
     });
 
     // グループID（AND条件）ごとにまとめる
-    // グループIDなし(null)は、それぞれ単独の独立した条件（単一条件）として扱う
     const groupResults = {};
     let noGroupMatch = false; // グループなし条件で1つでも合致したか
 
@@ -339,7 +341,6 @@ function App() {
         if (!groupResults[cond.groupId]) groupResults[cond.groupId] = [];
         groupResults[cond.groupId].push(isMatch);
       } else {
-        // グループIDがないものは、どれか1つでも合致すればOK（ORの関係）
         if (isMatch) noGroupMatch = true;
       }
     });
@@ -347,10 +348,10 @@ function App() {
     // ANDグループの判定：グループ内のすべての条件が true であるかをチェック
     const andGroupMatch = Object.keys(groupResults).some(gId => {
       const results = groupResults[gId];
-      return results.every(r => r === true); // 全て満たしていれば true
+      return results.length > 0 && results.every(r => r === true);
     });
 
-    // グループなし条件のいずれかに合致、またはANDグループのいずれかを完全に満たしていれば表示
+    // いずれかの条件を満たしていれば表示 (true)
     return noGroupMatch || andGroupMatch;
   };
 
