@@ -364,25 +364,30 @@ function App() {
 
           const isSelect = h && h.includes("▼");
           const hasOptions = currentFid && selectOptions[currentFid] && selectOptions[currentFid].length > 0;
+          
+          // 📌 項目名に「▲」が含まれている場合は入力不可（disabled）にする判定
+          const isDisabled = h && h.includes("▲");
 
           let inputElement;
 
           if (isBool(h)) {
             inputElement = React.createElement("div", { className: "radio-row" },
-              React.createElement("label", { className: "radio-item is-maru" },
+              React.createElement("label", { className: `radio-item is-maru ${isDisabled ? "is-disabled" : ""}` },
                 React.createElement("input", {
                   type: "radio",
                   name: h,
                   checked: rawValue === "○",
+                  disabled: isDisabled, // 📌 入力不可を設定
                   onChange: () => updateValue(h, "○")
                 }),
                 React.createElement("span", null, "○")
               ),
-              React.createElement("label", { className: "radio-item is-batsu" },
+              React.createElement("label", { className: `radio-item is-batsu ${isDisabled ? "is-disabled" : ""}` },
                 React.createElement("input", {
                   type: "radio",
                   name: h,
                   checked: rawValue === "×",
+                  disabled: isDisabled, // 📌 入力不可を設定
                   onChange: () => updateValue(h, "×")
                 }),
                 React.createElement("span", null, "×")
@@ -392,6 +397,7 @@ function App() {
             inputElement = React.createElement("select", {
               className: "select-box",
               value: rawValue,
+              disabled: isDisabled, // 📌 入力不可を設定
               onChange: (e) => updateValue(h, e.target.value)
             },
               React.createElement("option", { value: "" }, "-- 選択してください --"),
@@ -403,6 +409,7 @@ function App() {
             const inputField = React.createElement("input", {
               type: type,
               value: value,
+              disabled: isDisabled, // 📌 入力不可を設定
               onChange: (e) => {
                 // 📌 date型またはmonth型の場合は共通のチェンジハンドラへ送る
                 if (type === "date" || type === "month") {
@@ -425,7 +432,7 @@ function App() {
 
           return React.createElement("div", {
             key: i,
-            className: "card"
+            className: `card ${isDisabled ? "is-disabled-card" : ""}` // 📌 カード自体をグレーアウトさせるクラスを追加
           },
             React.createElement("div", { className: "card-title" }, h),
             inputElement
