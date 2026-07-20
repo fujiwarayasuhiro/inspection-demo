@@ -47,6 +47,17 @@ body {
 /* 📌 詳細画面の上部固定エリア（タブ表示対応のため余白を調整） */
 .detail-screen {
   padding-top: 270px;
+  height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 📌 ④点検詳細01と02のスクロールを独立させるエリア */
+.detail-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sticky-header {
@@ -119,6 +130,19 @@ body {
   background: #0078d4;
   color: white;
   box-shadow: 0 2px 4px rgba(0, 120, 212, 0.2);
+}
+
+/* 📌 ③ タブ2（点検詳細02）用のアクティブ表示スタイル */
+.tab-button.tab-02 {
+  color: #00796b;
+  background: #e0f2f1;
+  border-color: #00796b;
+}
+
+.tab-button.tab-02.active {
+  background: #00796b;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 121, 107, 0.2);
 }
 
 /* 📌 点検完了チェックボックスのスタイル */
@@ -197,10 +221,20 @@ body {
   transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
 }
 
+/* 📌 ③ タブ選択に合わせた項目カード背景・テーマのカスタマイズ */
+.theme-tab1 .card {
+  border-left: 4px solid #0078d4;
+}
+
+.theme-tab2 .card {
+  background-color: #f2f9f8;
+  border-left: 4px solid #00796b;
+}
+
 /* 📌 点検完了時のカードスタイル */
 .card.is-completed {
   border: 2px solid #2e7d32;
-  background: #e8f5e9; 
+  background: #e8f5e9 !important; 
   box-shadow: 0 4px 12px rgba(46, 125, 50, 0.15);
 }
 
@@ -213,8 +247,8 @@ body {
 
 /* 📌 ■が含まれる見出し（カテゴリ区切り）のスタイル */
 .card.is-heading {
-  background: transparent; /* 背景を透明に */
-  border: none;            /* 枠線を消す */
+  background: transparent !important; /* 背景を透明に */
+  border: none !important;            /* 枠線を消す */
   box-shadow: none;        /* シャドウを消す */
   padding: 16px 4px 4px 4px; /* 余白の調整 */
   margin-bottom: 8px;
@@ -224,6 +258,11 @@ body {
   color: #0078d4;          /* メインの青色で強調 */
   border-bottom: 2px solid #0078d4; /* 下線をつけてさらに分かりやすく */
   border-radius: 0;
+}
+
+.theme-tab2 .card.is-heading {
+  color: #00796b;
+  border-bottom: 2px solid #00796b;
 }
 
 /* 📌 『』の単位を表示するための横並びスタイル */
@@ -423,19 +462,23 @@ input[type="file"]::file-selector-button {
   display: inline-block;
 }
 
+/* 📌 ② 2ファイル選択時に改行して2段で綺麗に表示する処理 */
 .fake-file-text {
-  font-size: 14px;
+  font-size: 13px;
   color: #333;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: pre-wrap;
+  word-break: break-all;
   flex: 1;
+  line-height: 1.3;
 }
 
 /* カード全体の背景を薄いグレーにし、操作不可のカーソルにする */
 .card.is-disabled-card {
-  background-color: #f0f2f5;
-  border-color: #dcdcdc;
+  background-color: #f0f2f5 !important;
+  border-color: #dcdcdc !important;
+  border-left-color: #dcdcdc !important;
   box-shadow: none;
 }
 
@@ -502,8 +545,9 @@ select:disabled {
 
 /* 未入力エラー時のカード枠線（うっすら赤くする） */
 .card.card-error {
-  border: 1px solid #ffcdd2;
-  background-color: #fff8f8; /* ほんのり赤みがかった背景 */
+  border: 1px solid #ffcdd2 !important;
+  border-left: 4px solid #d32f2f !important;
+  background-color: #fff8f8 !important; /* ほんのり赤みがかった背景 */
   box-shadow: 0 4px 12px rgba(211, 47, 47, 0.05);
 }
 
