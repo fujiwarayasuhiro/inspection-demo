@@ -66,6 +66,15 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* 📌 タブテーマごとの入力エリア背景色連動 */
+.tab-scroll-container.theme-tab1 {
+  background-color: #f0f7ff; /* 点検詳細01用のごく薄い青背景 */
+}
+
+.tab-scroll-container.theme-tab2 {
+  background-color: #f0f8f8; /* 点検詳細02用のごく薄い青緑背景 */
+}
+
 .sticky-header {
   position: fixed;
   top: 0;
@@ -138,17 +147,17 @@ body {
   box-shadow: 0 2px 4px rgba(0, 120, 212, 0.2);
 }
 
-/* 📌 ③ タブ2（点検詳細02）用のカラー（少し色味を変えたブルー系） */
+/* 📌 ③ タブ2（点検詳細02）用のカラー（アクセントの効いたティール/青緑系） */
 .tab-button.tab-02 {
-  color: #0288d1;
-  background: #e1f5fe;
-  border-color: #0288d1;
+  color: #00838f;
+  background: #e0f2f1;
+  border-color: #00838f;
 }
 
 .tab-button.tab-02.active {
-  background: #0288d1;
+  background: #00838f;
   color: white;
-  box-shadow: 0 2px 4px rgba(2, 136, 209, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 131, 143, 0.2);
 }
 
 /* 📌 点検完了チェックボックスのスタイル */
@@ -227,15 +236,33 @@ body {
   transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
 }
 
-/* 📌 ③ タブ選択に合わせた項目カード境界線のカスタマイズ */
+/* 📌 ③ タブ選択に合わせた項目カード境界線およびフォーカス色のカスタマイズ */
 .theme-tab1 .card {
   border-left: 4px solid #0078d4;
 }
 
-/* 📌 点検詳細02アクティブ時は背景・文字色は点検詳細01と同じで、左右の縦線をブルー系の色に変更 */
+.theme-tab1 input[type="text"]:focus,
+.theme-tab1 input[type="number"]:focus,
+.theme-tab1 input[type="date"]:focus,
+.theme-tab1 input[type="month"]:focus,
+.theme-tab1 select.select-box:focus {
+  border-color: #0078d4;
+  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.15);
+}
+
+/* 📌 点検詳細02アクティブ時の項目カード境界線およびフォーカス色（青緑系） */
 .theme-tab2 .card {
   background-color: white;
-  border-left: 4px solid #0288d1;
+  border-left: 4px solid #00838f;
+}
+
+.theme-tab2 input[type="text"]:focus,
+.theme-tab2 input[type="number"]:focus,
+.theme-tab2 input[type="date"]:focus,
+.theme-tab2 input[type="month"]:focus,
+.theme-tab2 select.select-box:focus {
+  border-color: #00838f;
+  box-shadow: 0 0 0 3px rgba(0, 131, 143, 0.15);
 }
 
 /* 📌 点検完了時のカードスタイル */
@@ -268,8 +295,8 @@ body {
 }
 
 .theme-tab2 .card.is-heading {
-  color: #0288d1;
-  border-bottom: 2px solid #0288d1 !important; /* 点検詳細02の色に合わせて下線を変更 */
+  color: #00838f;
+  border-bottom: 2px solid #00838f !important; /* 点検詳細02の色に合わせて下線を変更 */
 }
 
 /* 📌 『』の単位を表示するための横並びスタイル */
