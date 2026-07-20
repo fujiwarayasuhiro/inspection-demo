@@ -571,3 +571,38 @@ input[type="month"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
     margin-right: 5px; 
 }
+
+/* 📌 タブ切り替えUI用スタイル */
+.tab-container {
+  display: flex;
+  max-width: 420px;
+  margin: 0 auto 8px auto;
+  padding: 0 16px;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: bold;
+  border: 1px solid #ccd4dc;
+  border-bottom: none;
+  background: #e4e7eb;
+  color: #555;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-button.active {
+  background: #0078d4;
+  color: white;
+  border-color: #0078d4;
+}
+
+/* タブ表示に伴うヘッダー下部余白の自動調整 */
+.detail-screen {
+  padding-top: 260px;
+}
