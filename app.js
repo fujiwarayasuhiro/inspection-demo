@@ -1,4 +1,4 @@
-const { useState, useMemo } = React;
+const { useState, useMemo, useRef } = React;
 
 function App() {
   const [records, setRecords] = useState([]);
@@ -33,9 +33,16 @@ function App() {
 
   // 📌 エラーが発生した項目（インデックス番号）を保持するStateを追加
   const [errorIndices, setErrorIndices] = useState([]);
+  // 📌 ⑤ 点検詳細02（ファイル2）用のエラー項目Stateを追加
+  const [errorIndices2, setErrorIndices2] = useState([]);
+
   // 📌 「入力条件設定」シートのルールを保持するStateを追加
   const [displayRules, setDisplayRules] = useState([]);
   const [displayRules2, setDisplayRules2] = useState([]);
+
+  // 📌 ④ タブごとのスクロール用Refを追加（独立スクロール制御）
+  const tab1ScrollRef = useRef(null);
+  const tab2ScrollRef = useRef(null);
 
   // ○×判定
   const isBool = (label) => label && label.includes("○") && label.includes("×");
@@ -255,6 +262,16 @@ function App() {
     try {
       if (files.length === 1) {
         const res = await parseSingleFile(files[0]);
+
+        // 📌 ① エクセルファイルを１つだけ読み込んだとき、4行目のファイル総数が2だったら3行目の区分の数字を見て無い方の区分のファイルが選択されていませんとポップアップを出す
+        if (res.paramInfo && res.paramInfo.total === "2") {
+          const missingKubun = res.paramInfo.kubun === "1" ? "2" : "1";
+          alert(`区分${missingKubun}のファイルが選択されていません`);
+          // 選択状態をリセット
+          e.target.value = "";
+          return;
+        }
+
         setWb1(res.wb);
         setHeaders(res.headers);
         setFields(res.fields);
@@ -325,7 +342,8 @@ function App() {
         setParamInfo2(f2.paramInfo);
 
         setIsTwoFiles(true);
-        setFileName(`${f1.fileName}, ${f2.fileName}`);
+        // 📌 ② 2つのエクセルファイルを読み込んだ時、ファイル名は2段で表示するため改行コードを含める
+        setFileName(`${f1.fileName}\n${f2.fileName}`);
         alert("ファイルの読み込み成功しました");
       }
     } catch (err) {
@@ -352,12 +370,12 @@ function App() {
     }
   };
 
-  // 📌 戻るボタン押下時の必須チェックバリデーション
+  // 📌 戻るボタン押下時の必須チェックバリデーション（⑤ 点検詳細02の漏れを修正）
   const handleBack = () => {
     const currentRec1 = records[selectedIndex];
-    const errors = [];
+    const errors1 = [];
 
-    // 表示されている項目のみをバリデーション対象にするため表示可否判定マップを算出
+    // 表示されている項目のみをバリデーション対象にするため表示可否判定マップを算出 (ファイル1)
     const visibleMap1 = getVisibleFieldsMap(currentRec1, false);
 
     headers.forEach((h, i) => {
@@ -374,18 +392,50 @@ function App() {
       const isEmpty = value === undefined || value === null || String(value).trim() === "";
 
       if (isRequired && isEmpty) {
-        errors.push(i); // エラーが起きた項目のインデックスを記録
+        errors1.push(i); // エラーが起きた項目のインデックスを記録
       }
     });
 
-    if (errors.length > 0) {
-      setErrorIndices(errors);
+    // 📌 ⑤ 点検詳細02（2つ目のファイル）のチェック処理追加
+    const errors2 = [];
+    if (isTwoFiles && records2[selectedIndex]) {
+      const currentRec2 = records2[selectedIndex];
+      const visibleMap2 = getVisibleFieldsMap(currentRec2, true);
+
+      headers2.forEach((h, i) => {
+        if ((h && h.includes("◆")) || (h && h.includes("■"))) return;
+
+        const currentFid = fields2[i];
+        if (currentFid && visibleMap2[currentFid] === false) return;
+
+        const isRequired = h && h.includes("※");
+        const value = currentRec2[h];
+        const isEmpty = value === undefined || value === null || String(value).trim() === "";
+
+        if (isRequired && isEmpty) {
+          errors2.push(i);
+        }
+      });
+    }
+
+    if (errors1.length > 0 || errors2.length > 0) {
+      setErrorIndices(errors1);
+      setErrorIndices2(errors2);
+
+      // エラーが存在するタブへ自動切り替え
+      if (errors1.length > 0) {
+        setActiveTab("file1");
+      } else if (errors2.length > 0) {
+        setActiveTab("file2");
+      }
+
       alert("必須項目で未入力または未選択箇所があります");
       return; // 画面遷移をストップ
     }
 
     // エラーがなければクリアして戻る
     setErrorIndices([]);
+    setErrorIndices2([]);
     setScreen("list");
   };
 
@@ -496,6 +546,7 @@ function App() {
         onClick: () => {
           setSelectedIndex(i);
           setErrorIndices([]); // 📌 詳細画面を開くときはエラー状態をリセット
+          setErrorIndices2([]);
           setActiveTab("file1"); // 詳細画面を開いたときはタブ1をデフォルト表示
           setScreen("detail");
         }
@@ -646,9 +697,133 @@ function App() {
   const activeHeaders = isFile2Active ? headers2 : headers;
   const activeFields = isFile2Active ? fields2 : fields;
   const activeSelectOptions = isFile2Active ? selectOptions2 : selectOptions;
+  const activeErrorIndices = isFile2Active ? errorIndices2 : errorIndices;
 
   // 📌 現在のレコードに対する動的表示制御判定結果を算出
   const visibleFieldsMap = getVisibleFieldsMap(activeRecord, isFile2Active);
+
+  // 📌 入力コンポーネント生成ヘルパー
+  const renderFieldsList = (targetHeaders, targetFields, targetRecord, targetSelectOptions, targetErrorIndices, isFile2) => {
+    const targetVisibleMap = getVisibleFieldsMap(targetRecord, isFile2);
+
+    return targetHeaders.map((h, i) => {
+      // 📌 項目名に「◆」が含まれている場合は非表示（何もレンダリングしない）
+      if (h && h.includes("◆")) {
+        return null;
+      }
+
+      const currentFid = targetFields[i];
+
+      // 📌 「入力条件設定」シートによる動的表示制御の適用
+      if (currentFid && targetVisibleMap[currentFid] === false) {
+        return null;
+      }
+
+      const rawValue = targetRecord[h] === undefined || targetRecord[h] === null ? "" : targetRecord[h];
+      
+      const isHeading = h && h.includes("■");
+
+      if (isHeading) {
+        return React.createElement("div", {
+          key: i,
+          className: "card is-heading"
+        }, h);
+      }
+
+      // 通常の項目の場合
+      const type = getInputType(h, rawValue, isFile2);
+      const value = (type === "date" || type === "month") ? formatDateForInput(rawValue, type === "month") : rawValue;
+
+      const unitMatch = h && h.match(/『([^』]+)』/);
+      const unitText = unitMatch ? unitMatch[1] : null;
+
+      const isSelect = h && h.includes("▼");
+      const hasOptions = currentFid && targetSelectOptions[currentFid] && targetSelectOptions[currentFid].length > 0;
+      
+      const isDisabled = h && h.includes("▲");
+      const isRequired = h && h.includes("※");
+      
+      // 📌 エラー判定
+      const hasError = targetErrorIndices.includes(i) && (rawValue === undefined || rawValue === null || String(rawValue).trim() === "");
+
+      let inputElement;
+
+      if (isBool(h)) {
+        inputElement = React.createElement("div", { className: "radio-row" },
+          React.createElement("label", { className: `radio-item is-maru ${isDisabled ? "is-disabled" : ""}` },
+            React.createElement("input", {
+              type: "radio",
+              name: `${h}_${isFile2 ? "file2" : "file1"}`,
+              checked: rawValue === "○",
+              disabled: isDisabled,
+              onChange: () => updateValue(h, "○", isFile2)
+            }),
+            React.createElement("span", null, "○")
+          ),
+          React.createElement("label", { className: `radio-item is-batsu ${isDisabled ? "is-disabled" : ""}` },
+            React.createElement("input", {
+              type: "radio",
+              name: `${h}_${isFile2 ? "file2" : "file1"}`,
+              checked: rawValue === "×",
+              disabled: isDisabled,
+              onChange: () => updateValue(h, "×", isFile2)
+            }),
+            React.createElement("span", null, "×")
+          )
+        );
+      } else if (isSelect && hasOptions) {
+        inputElement = React.createElement("select", {
+          className: `select-box ${hasError ? "input-error" : ""}`,
+          value: rawValue,
+          disabled: isDisabled,
+          onChange: (e) => updateValue(h, e.target.value, isFile2)
+        },
+          React.createElement("option", { value: "" }, "-- 選択してください --"),
+          targetSelectOptions[currentFid].map((opt, idx) => 
+            React.createElement("option", { key: idx, value: opt }, opt)
+          )
+        );
+      } else {
+        const inputField = React.createElement("input", {
+          type: type,
+          value: value,
+          className: hasError ? "input-error" : "",
+          disabled: isDisabled,
+          onChange: (e) => {
+            if (type === "date" || type === "month") {
+              handleDateChange(h, e.target.value, type === "month", isFile2);
+            } else {
+              updateValue(h, e.target.value, isFile2);
+            }
+          }
+        });
+
+        if (unitText) {
+          inputElement = React.createElement("div", { className: "input-with-unit" },
+            inputField,
+            React.createElement("span", { className: "input-unit-text" }, unitText)
+          );
+        } else {
+          inputElement = inputField;
+        }
+      }
+
+      const isSelectionType = isBool(h) || isSelect || type === "date" || type === "month";
+      const errorMessage = isSelectionType ? "未選択です" : "未入力です";
+
+      return React.createElement("div", {
+        key: i,
+        className: `card ${isDisabled ? "is-disabled-card" : ""} ${hasError ? "card-error" : ""}`
+      },
+        React.createElement("div", { className: "card-title-row" },
+          React.createElement("div", { className: "card-title" }, h),
+          isRequired && React.createElement("span", { className: "required-badge" }, "必須")
+        ),
+        inputElement,
+        hasError && React.createElement("div", { className: "error-message-text" }, errorMessage)
+      );
+    });
+  };
 
   // 詳細画面
   return (
@@ -662,7 +837,7 @@ function App() {
           React.createElement("div", { className: "action-left" },
             React.createElement("button", {
               className: "button-back",
-              onClick: handleBack // 📌 チェックロジックへ変更
+              onClick: handleBack // 📌 チェックロジック
             }, "← 戻る")
           ),
           React.createElement("div", { className: "action-center" },
@@ -692,143 +867,38 @@ function App() {
           )
         ),
 
-        // 📌 2ファイル選択時のみタブバーを表示
+        // 📌 ③ タブボタンのスタイル切り替え（点検詳細01/点検詳細02で色を分ける）
         isTwoFiles && React.createElement("div", { className: "tab-bar-container" },
           React.createElement("button", {
-            className: `tab-button ${activeTab === "file1" ? "active" : ""}`,
+            className: `tab-button tab-01 ${activeTab === "file1" ? "active" : ""}`,
             onClick: () => setActiveTab("file1")
           }, "点検詳細01"),
           React.createElement("button", {
-            className: `tab-button ${activeTab === "file2" ? "active" : ""}`,
+            className: `tab-button tab-02 ${activeTab === "file2" ? "active" : ""}`,
             onClick: () => setActiveTab("file2")
           }, "点検詳細02")
         )
       ),
 
-      React.createElement("div", { className: "container" },
-        activeHeaders.map((h, i) => {
-          // 📌 項目名に「◆」が含まれている場合は非表示（何もレンダリングしない）
-          if (h && h.includes("◆")) {
-            return null;
-          }
+      /* 📌 ④ 点検詳細01と02のスクロールを独立させた表示領域 */
+      React.createElement("div", { className: "detail-content-scroll" },
+        // タブ1 (点検詳細01)
+        React.createElement("div", {
+          ref: tab1ScrollRef,
+          className: "container theme-tab1",
+          style: { display: activeTab === "file1" ? "block" : "none" }
+        },
+          renderFieldsList(headers, fields, currentRecord1, selectOptions, errorIndices, false)
+        ),
 
-          const currentFid = activeFields[i];
-
-          // 📌 「入力条件設定」シートによる動的表示制御の適用
-          // E列（対象FID）に含まれる項目であり、かつ表示条件を満たしていない場合は非表示（nullを返す）
-          if (currentFid && visibleFieldsMap[currentFid] === false) {
-            return null;
-          }
-
-          const rawValue = activeRecord[h] === undefined || activeRecord[h] === null ? "" : activeRecord[h];
-          
-          const isHeading = h && h.includes("■");
-
-          if (isHeading) {
-            return React.createElement("div", {
-              key: i,
-              className: "card is-heading"
-            }, h);
-          }
-
-          // 通常の項目の場合
-          const type = getInputType(h, rawValue, isFile2Active);
-          // 📌 年月型（month）か通常日付型（date）かに応じてフォーマットを切り替える
-          const value = (type === "date" || type === "month") ? formatDateForInput(rawValue, type === "month") : rawValue;
-
-          const unitMatch = h && h.match(/『([^』]+)』/);
-          const unitText = unitMatch ? unitMatch[1] : null;
-
-          const isSelect = h && h.includes("▼");
-          const hasOptions = currentFid && activeSelectOptions[currentFid] && activeSelectOptions[currentFid].length > 0;
-          
-          // 📌 項目名に「▲」が含まれている場合は入力不可（disabled）にする判定
-          const isDisabled = h && h.includes("▲");
-          
-          // 📌 項目名に「※」が含まれている場合は必須入力項目にする判定
-          const isRequired = h && h.includes("※");
-          
-          // 📌 現在の項目がエラー対象かつ、まだ値が空のままか判定（1ファイル目のみエラーチェック適用）
-          const hasError = !isFile2Active && errorIndices.includes(i) && (rawValue === undefined || rawValue === null || String(rawValue).trim() === "");
-
-          let inputElement;
-
-          if (isBool(h)) {
-            inputElement = React.createElement("div", { className: "radio-row" },
-              React.createElement("label", { className: `radio-item is-maru ${isDisabled ? "is-disabled" : ""}` },
-                React.createElement("input", {
-                  type: "radio",
-                  name: `${h}_${activeTab}`,
-                  checked: rawValue === "○",
-                  disabled: isDisabled,
-                  onChange: () => updateValue(h, "○", isFile2Active)
-                }),
-                React.createElement("span", null, "○")
-              ),
-              React.createElement("label", { className: `radio-item is-batsu ${isDisabled ? "is-disabled" : ""}` },
-                React.createElement("input", {
-                  type: "radio",
-                  name: `${h}_${activeTab}`,
-                  checked: rawValue === "×",
-                  disabled: isDisabled,
-                  onChange: () => updateValue(h, "×", isFile2Active)
-                }),
-                React.createElement("span", null, "×")
-              )
-            );
-          } else if (isSelect && hasOptions) {
-            inputElement = React.createElement("select", {
-              className: `select-box ${hasError ? "input-error" : ""}`,
-              value: rawValue,
-              disabled: isDisabled,
-              onChange: (e) => updateValue(h, e.target.value, isFile2Active)
-            },
-              React.createElement("option", { value: "" }, "-- 選択してください --"),
-              activeSelectOptions[currentFid].map((opt, idx) => 
-                React.createElement("option", { key: idx, value: opt }, opt)
-              )
-            );
-          } else {
-            const inputField = React.createElement("input", {
-              type: type,
-              value: value,
-              className: hasError ? "input-error" : "",
-              disabled: isDisabled,
-              onChange: (e) => {
-                if (type === "date" || type === "month") {
-                  handleDateChange(h, e.target.value, type === "month", isFile2Active);
-                } else {
-                  updateValue(h, e.target.value, isFile2Active);
-                }
-              }
-            });
-
-            if (unitText) {
-              inputElement = React.createElement("div", { className: "input-with-unit" },
-                inputField,
-                React.createElement("span", { className: "input-unit-text" }, unitText)
-              );
-            } else {
-              inputElement = inputField;
-            }
-          }
-
-          // 📌 エラーメッセージの文言をタイプ別に判定
-          const isSelectionType = isBool(h) || isSelect || type === "date" || type === "month";
-          const errorMessage = isSelectionType ? "未選択です" : "未入力です";
-
-          return React.createElement("div", {
-            key: i,
-            className: `card ${isDisabled ? "is-disabled-card" : ""} ${hasError ? "card-error" : ""}`
-          },
-            React.createElement("div", { className: "card-title-row" },
-              React.createElement("div", { className: "card-title" }, h),
-              isRequired && React.createElement("span", { className: "required-badge" }, "必須")
-            ),
-            inputElement,
-            hasError && React.createElement("div", { className: "error-message-text" }, errorMessage)
-          );
-        })
+        // タブ2 (点検詳細02)
+        isTwoFiles && currentRecord2 && React.createElement("div", {
+          ref: tab2ScrollRef,
+          className: "container theme-tab2",
+          style: { display: activeTab === "file2" ? "block" : "none" }
+        },
+          renderFieldsList(headers2, fields2, currentRecord2, selectOptions2, errorIndices2, true)
+        )
       )
     )
   );
