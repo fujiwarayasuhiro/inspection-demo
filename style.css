@@ -56,6 +56,12 @@ body {
 /* 📌 ④点検詳細01と02のスクロールを独立させるエリア */
 .detail-content-scroll {
   flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-scroll-container {
+  height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -132,17 +138,17 @@ body {
   box-shadow: 0 2px 4px rgba(0, 120, 212, 0.2);
 }
 
-/* 📌 ③ タブ2（点検詳細02）用のアクティブ表示スタイル */
+/* 📌 ③ タブ2（点検詳細02）用のカラー（少し色味を変えたブルー系） */
 .tab-button.tab-02 {
-  color: #00796b;
-  background: #e0f2f1;
-  border-color: #00796b;
+  color: #0288d1;
+  background: #e1f5fe;
+  border-color: #0288d1;
 }
 
 .tab-button.tab-02.active {
-  background: #00796b;
+  background: #0288d1;
   color: white;
-  box-shadow: 0 2px 4px rgba(0, 121, 107, 0.2);
+  box-shadow: 0 2px 4px rgba(2, 136, 209, 0.2);
 }
 
 /* 📌 点検完了チェックボックスのスタイル */
@@ -221,14 +227,15 @@ body {
   transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
 }
 
-/* 📌 ③ タブ選択に合わせた項目カード背景・テーマのカスタマイズ */
+/* 📌 ③ タブ選択に合わせた項目カード境界線のカスタマイズ */
 .theme-tab1 .card {
   border-left: 4px solid #0078d4;
 }
 
+/* 📌 点検詳細02アクティブ時は背景・文字色は点検詳細01と同じで、左側の縦線のみブルー系の色に変更 */
 .theme-tab2 .card {
-  background-color: #f2f9f8;
-  border-left: 4px solid #00796b;
+  background-color: white;
+  border-left: 4px solid #0288d1;
 }
 
 /* 📌 点検完了時のカードスタイル */
@@ -261,8 +268,8 @@ body {
 }
 
 .theme-tab2 .card.is-heading {
-  color: #00796b;
-  border-bottom: 2px solid #00796b;
+  color: #0288d1;
+  border-bottom: 2px solid #0288d1;
 }
 
 /* 📌 『』の単位を表示するための横並びスタイル */
