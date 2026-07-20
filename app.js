@@ -105,9 +105,9 @@ function App() {
     if (paramSheet) {
       const pRows = XLSX.utils.sheet_to_json(paramSheet, { header: 1 });
       if (pRows.length >= 4) {
-        paramInfo.name = pRows[1] ? String(pRows[1][1] || "").trim() : "";
-        paramInfo.kubun = pRows[2] ? String(pRows[2][1] || "").trim() : "";
-        paramInfo.total = pRows[3] ? String(pRows[3][1] || "").trim() : "";
+        paramInfo.name = pRows[1] && pRows[1][1] !== undefined ? String(pRows[1][1]).trim() : "";
+        paramInfo.kubun = pRows[2] && pRows[2][1] !== undefined ? String(pRows[2][1]).trim() : "";
+        paramInfo.total = pRows[3] && pRows[3][1] !== undefined ? String(pRows[3][1]).trim() : "";
       }
     }
 
@@ -255,18 +255,25 @@ function App() {
           alert("エラー：両ファイルのパラメータ設定シート（2行目：点検名）が一致していません。");
           return;
         }
-        if (p1.total !== "2" || p2.total !== "2") {
-          alert("エラー：両ファイルのパラメータ設定シート（4行目：ファイル総数）が「2」ではありません。");
+        
+        // 📌 数値・文字列双方に対応できるよう補正（2または"2"）
+        const total1 = String(p1.total).trim();
+        const total2 = String(p2.total).trim();
+        if (total1 !== "2" || total2 !== "2") {
+          alert(`エラー：両ファイルのパラメータ設定シート（4行目：ファイル総数）が「2」ではありません。（読み込み値: [${total1}], [${total2}]）`);
           return;
         }
-        const kubuns = [p1.kubun, p2.kubun].sort();
+
+        const kubun1 = String(p1.kubun).trim();
+        const kubun2 = String(p2.kubun).trim();
+        const kubuns = [kubun1, kubun2].sort();
         if (kubuns[0] !== "1" || kubuns[1] !== "2") {
-          alert("エラー：パラメータ設定シート（3行目：区分）が「1」と「2」で揃っていません。");
+          alert(`エラー：パラメータ設定シート（3行目：区分）が「1」と「2」で揃っていません。（読み込み値: [${kubun1}], [${kubun2}]）`);
           return;
         }
 
         // 区分1、区分2の順序に整列
-        if (p1.kubun === "2") {
+        if (kubun1 === "2") {
           parsedList.reverse();
         }
 
