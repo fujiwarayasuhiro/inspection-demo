@@ -44,9 +44,9 @@ body {
   box-sizing: border-box;
 }
 
-/* 📌 詳細画面の上部固定エリア（フローティングバナー追加に伴い余白を拡大） */
+/* 📌 詳細画面の上部固定エリア（タブ表示対応のため余白を調整） */
 .detail-screen {
-  padding-top: 230px;
+  padding-top: 270px;
 }
 
 .sticky-header {
@@ -91,6 +91,36 @@ body {
   justify-content: flex-end;
 }
 
+/* 📌 点検詳細タブ切り替えスタイルの追加 */
+.tab-bar-container {
+  max-width: 420px;
+  margin: auto;
+  padding: 0 16px 8px 16px;
+  display: flex;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #0078d4;
+  background: #e1f0fc;
+  border: 1px solid #0078d4;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.tab-button.active {
+  background: #0078d4;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 120, 212, 0.2);
+}
+
 /* 📌 点検完了チェックボックスのスタイル */
 .complete-checkbox-label {
   display: flex;
@@ -133,7 +163,7 @@ body {
 .floating-card-container {
   max-width: 420px;
   margin: auto;
-  padding: 4px 16px 12px 16px;
+  padding: 4px 16px 8px 16px;
   box-sizing: border-box;
 }
 
@@ -473,7 +503,7 @@ select:disabled {
 /* 未入力エラー時のカード枠線（うっすら赤くする） */
 .card.card-error {
   border: 1px solid #ffcdd2;
-  background-color: #fffbbfb; /* ほんのり赤みがかった背景 */
+  background-color: #fff8f8; /* ほんのり赤みがかった背景 */
   box-shadow: 0 4px 12px rgba(211, 47, 47, 0.05);
 }
 
@@ -513,7 +543,7 @@ select.input-error:focus {
     padding-top: 60px;
   }
   .detail-screen {
-    padding-top: 200px;
+    padding-top: 250px;
   }
   .action-bar {
     padding: 6px 12px;
@@ -570,39 +600,4 @@ input[type="month"]::-webkit-calendar-picker-indicator {
     background-size: contain;
     cursor: pointer;
     margin-right: 5px; 
-}
-
-/* 📌 タブ切り替えUI用スタイル */
-.tab-container {
-  display: flex;
-  max-width: 420px;
-  margin: 0 auto 8px auto;
-  padding: 0 16px;
-  gap: 8px;
-  box-sizing: border-box;
-}
-
-.tab-button {
-  flex: 1;
-  padding: 8px 12px;
-  font-size: 14px;
-  font-weight: bold;
-  border: 1px solid #ccd4dc;
-  border-bottom: none;
-  background: #e4e7eb;
-  color: #555;
-  border-radius: 8px 8px 0 0;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tab-button.active {
-  background: #0078d4;
-  color: white;
-  border-color: #0078d4;
-}
-
-/* タブ表示に伴うヘッダー下部余白の自動調整 */
-.detail-screen {
-  padding-top: 260px;
 }
