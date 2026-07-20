@@ -232,10 +232,11 @@ body {
   border-left: 4px solid #0078d4;
 }
 
-/* 📌 点検詳細02アクティブ時は背景・文字色は点検詳細01と同じで、左側の縦線のみブルー系の色に変更 */
+/* 📌 点検詳細02アクティブ時は背景・文字色は点検詳細01と同じで、左右の縦線をブルー系の色に変更 */
 .theme-tab2 .card {
   background-color: white;
   border-left: 4px solid #0288d1;
+  border-right: 4px solid #0288d1; /* 右側にも縦線を追加 */
 }
 
 /* 📌 点検完了時のカードスタイル */
@@ -257,19 +258,19 @@ body {
   background: transparent !important; /* 背景を透明に */
   border: none !important;            /* 枠線を消す */
   box-shadow: none;        /* シャドウを消す */
-  padding: 16px 4px 4px 4px; /* 余白の調整 */
+  padding: 16px 4px 8px 4px; /* 下部に線との間の余白を追加 */
   margin-bottom: 8px;
   margin-top: 12px;        /* 上に隙間をあけて区切りを強調 */
   font-size: 16px;
   font-weight: bold;
   color: #0078d4;          /* メインの青色で強調 */
-  border-bottom: 2px solid #0078d4; /* 下線をつけてさらに分かりやすく */
+  border-bottom: 2px solid #0078d4 !important; /* 同色の線で区切りを分かりやすく */
   border-radius: 0;
 }
 
 .theme-tab2 .card.is-heading {
   color: #0288d1;
-  border-bottom: 2px solid #0288d1;
+  border-bottom: 2px solid #0288d1 !important; /* 点検詳細02の色に合わせて下線を変更 */
 }
 
 /* 📌 『』の単位を表示するための横並びスタイル */
