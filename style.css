@@ -236,7 +236,6 @@ body {
 .theme-tab2 .card {
   background-color: white;
   border-left: 4px solid #0288d1;
-  border-right: 4px solid #0288d1; /* 右側にも縦線を追加 */
 }
 
 /* 📌 点検完了時のカードスタイル */
