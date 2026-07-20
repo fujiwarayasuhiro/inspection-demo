@@ -1,4 +1,4 @@
-const { useState, useMemo, useRef } = React;
+const { useState, useMemo, useRef, useEffect } = React;
 
 function App() {
   const [records, setRecords] = useState([]);
@@ -43,6 +43,17 @@ function App() {
   // 📌 ④ タブごとのスクロール用Refを追加（独立スクロール制御）
   const tab1ScrollRef = useRef(null);
   const tab2ScrollRef = useRef(null);
+
+  // 📌 ② タブ切り替え時および画面表示時にスクロール位置を最上部にリセットする処理
+  useEffect(() => {
+    if (screen === "detail") {
+      if (activeTab === "file1" && tab1ScrollRef.current) {
+        tab1ScrollRef.current.scrollTop = 0;
+      } else if (activeTab === "file2" && tab2ScrollRef.current) {
+        tab2ScrollRef.current.scrollTop = 0;
+      }
+    }
+  }, [activeTab, selectedIndex, screen]);
 
   // ○×判定
   const isBool = (label) => label && label.includes("○") && label.includes("×");
@@ -254,6 +265,13 @@ function App() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
+    // 📌 ① エクセルファイルが3個以上選択された場合の制限ポップアップ
+    if (files.length > 2) {
+      alert("エクセルファイルの選択は最大2個までです");
+      e.target.value = "";
+      return;
+    }
+
     if (!window.XLSX) {
       alert("SheetJSライブラリが読み込まれていません。");
       return;
@@ -286,7 +304,7 @@ function App() {
         setIsTwoFiles(false);
         setFileName(res.fileName);
         alert("ファイルの読み込み成功しました");
-      } else if (files.length >= 2) {
+      } else if (files.length === 2) {
         const parsedFiles = await Promise.all([parseSingleFile(files[0]), parseSingleFile(files[1])]);
 
         let f1 = parsedFiles[0];
@@ -699,9 +717,6 @@ function App() {
   const activeSelectOptions = isFile2Active ? selectOptions2 : selectOptions;
   const activeErrorIndices = isFile2Active ? errorIndices2 : errorIndices;
 
-  // 📌 現在のレコードに対する動的表示制御判定結果を算出
-  const visibleFieldsMap = getVisibleFieldsMap(activeRecord, isFile2Active);
-
   // 📌 入力コンポーネント生成ヘルパー
   const renderFieldsList = (targetHeaders, targetFields, targetRecord, targetSelectOptions, targetErrorIndices, isFile2) => {
     const targetVisibleMap = getVisibleFieldsMap(targetRecord, isFile2);
@@ -885,19 +900,23 @@ function App() {
         // タブ1 (点検詳細01)
         React.createElement("div", {
           ref: tab1ScrollRef,
-          className: "container theme-tab1",
+          className: "tab-scroll-container theme-tab1",
           style: { display: activeTab === "file1" ? "block" : "none" }
         },
-          renderFieldsList(headers, fields, currentRecord1, selectOptions, errorIndices, false)
+          React.createElement("div", { className: "container" },
+            renderFieldsList(headers, fields, currentRecord1, selectOptions, errorIndices, false)
+          )
         ),
 
         // タブ2 (点検詳細02)
         isTwoFiles && currentRecord2 && React.createElement("div", {
           ref: tab2ScrollRef,
-          className: "container theme-tab2",
+          className: "tab-scroll-container theme-tab2",
           style: { display: activeTab === "file2" ? "block" : "none" }
         },
-          renderFieldsList(headers2, fields2, currentRecord2, selectOptions2, errorIndices2, true)
+          React.createElement("div", { className: "container" },
+            renderFieldsList(headers2, fields2, currentRecord2, selectOptions2, errorIndices2, true)
+          )
         )
       )
     )
