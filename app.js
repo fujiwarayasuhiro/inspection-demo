@@ -14,6 +14,8 @@ function App() {
   const [selectOptions, setSelectOptions] = useState({});
   // 📌 エラーが発生した項目（インデックス番号）を保持するStateを追加
   const [errorIndices, setErrorIndices] = useState([]);
+  // 📌 「入力条件設定」シートのルールを保持するStateを追加
+  const [displayRules, setDisplayRules] = useState([]);
 
   // ○×判定
   const isBool = (label) => label && label.includes("○") && label.includes("×");
@@ -115,6 +117,34 @@ function App() {
           setSelectOptions(optionsMap);
         }
 
+        // 📌 入力条件設定シートの読込
+        const condSheet = wb.Sheets["入力条件設定"];
+        if (condSheet) {
+          const condRows = XLSX.utils.sheet_to_json(condSheet, { header: 1 });
+          // 1行目はヘッダーとみなし2行目以降（index 1~）を抽出
+          const rules = [];
+          for (let r = 1; r < condRows.length; r++) {
+            const row = condRows[r];
+            if (!row || row.length === 0) continue;
+            const fid = row[1];       // B列: FID
+            const optionVal = row[2]; // C列: 選択肢
+            const targetFid = row[4]; // E列: 対象FID
+            const groupId = row[5];   // F列: グループID (AND条件用)
+
+            if (fid && optionVal !== undefined && targetFid) {
+              rules.push({
+                fid: String(fid).trim(),
+                optionVal: String(optionVal).trim(),
+                targetFid: String(targetFid).trim(),
+                groupId: groupId ? String(groupId).trim() : null
+              });
+            }
+          }
+          setDisplayRules(rules);
+        } else {
+          setDisplayRules([]);
+        }
+
         let numCols = [];
         let dateCols = []; 
         let ymCols = []; // 📌 年月項目用の配列
@@ -134,7 +164,7 @@ function App() {
             } else {
               const hasNumber = hasNumberFormat;
               const isNotDate = !formatStr.includes("y") && !formatStr.includes("m") && !formatStr.includes("d");
-              if (hasNumber && isNotDate) numCols.push(h);
+              if (hasNumber) numCols.push(h);
 
               const isRealDate = (formatStr.includes("y") || formatStr.includes("m") || formatStr.includes("d")) && !hasNumberFormat;
               if (isRealDate) {
@@ -147,6 +177,7 @@ function App() {
         setDateFields(dateCols); 
         setYearMonthFields(ymCols); // 📌 年月判定結果を設定
 
+        // 実データは3行目（インデックス2）から読み込む
         const data = rows.slice(2).map(row => {
           let obj = {};
           obj._isCompleted = false; 
@@ -193,9 +224,16 @@ function App() {
     const currentRec = records[selectedIndex];
     const errors = [];
 
+    // 表示されている項目のみをバリデーション対象にするため表示可否判定マップを算出
+    const visibleMap = getVisibleFieldsMap(currentRec);
+
     headers.forEach((h, i) => {
       // 非表示項目(◆)や見出し(■)はチェック対象外
       if ((h && h.includes("◆")) || (h && h.includes("■"))) return;
+
+      // 📌 動的表示制御により非表示になっている項目もバリデーション対象外とする
+      const currentFid = fields[i];
+      if (currentFid && visibleMap[currentFid] === false) return;
 
       // 「※」が含まれていて、値が空の場合
       const isRequired = h && h.includes("※");
@@ -290,6 +328,92 @@ function App() {
     );
   }, [records, headers]);
 
+  // 📌 「入力条件設定」に基づく動的表示可否の算出ロジック
+  const getVisibleFieldsMap = (currentRecord) => {
+    if (!displayRules || displayRules.length === 0) return {};
+
+    // FIDからヘッダー名を取得するための逆引きマップ作成
+    const fidToHeaderMap = {};
+    fields.forEach((fid, idx) => {
+      if (fid) fidToHeaderMap[String(fid).trim()] = headers[idx];
+    });
+
+    // 1行目に「★」が付いている項目のみを表示制御の親項目とする
+    const starFids = new Set();
+    headers.forEach((h, idx) => {
+      if (h && h.includes("★")) {
+        const fid = fields[idx];
+        if (fid) starFids.add(String(fid).trim());
+      }
+    });
+
+    // 「入力条件設定」シートのE列（対象FID）に登録されている項目IDの一覧（＝初期状態で制御対象となる項目）
+    const controlledTargetFids = new Set(displayRules.map(r => r.targetFid));
+
+    // ルールをグループ単位・および単体（OR）に分類して評価
+    const visibleMap = {};
+    controlledTargetFids.forEach(tfid => {
+      visibleMap[tfid] = false; // 初期状態は非表示
+    });
+
+    // 各対象FIDごとにルール群を取得して評価
+    controlledTargetFids.forEach(targetFid => {
+      const rulesForTarget = displayRules.filter(r => r.targetFid === targetFid);
+
+      // グループ（AND条件）と非グループ（OR条件）に分別
+      const groupMap = {};
+      const singleRules = [];
+
+      rulesForTarget.forEach(r => {
+        if (r.groupId) {
+          if (!groupMap[r.groupId]) groupMap[r.groupId] = [];
+          groupMap[r.groupId].push(r);
+        } else {
+          singleRules.push(r);
+        }
+      });
+
+      let isVisible = false;
+
+      // 1. OR条件（F列空欄）の評価：いずれか1つでも条件に合致すれば表示
+      for (const rule of singleRules) {
+        if (starFids.has(rule.fid)) {
+          const parentHeader = fidToHeaderMap[rule.fid];
+          if (parentHeader) {
+            const currentVal = String(currentRecord[parentHeader] || "").trim();
+            if (currentVal === rule.optionVal) {
+              isVisible = true;
+              break;
+            }
+          }
+        }
+      }
+
+      // 2. AND条件（F列グループID記入）の評価：同一グループ内の全条件を満たせば表示
+      if (!isVisible) {
+        for (const gid in groupMap) {
+          const rulesInGroup = groupMap[gid];
+          const allSatisfied = rulesInGroup.every(rule => {
+            if (!starFids.has(rule.fid)) return false;
+            const parentHeader = fidToHeaderMap[rule.fid];
+            if (!parentHeader) return false;
+            const currentVal = String(currentRecord[parentHeader] || "").trim();
+            return currentVal === rule.optionVal;
+          });
+
+          if (allSatisfied) {
+            isVisible = true;
+            break;
+          }
+        }
+      }
+
+      visibleMap[targetFid] = isVisible;
+    });
+
+    return visibleMap;
+  };
+
   // 一覧画面
   if (screen === "list") {
     return (
@@ -329,6 +453,9 @@ function App() {
 
   // 詳細画面用のカレントレコードを取得
   const currentRecord = records[selectedIndex];
+
+  // 📌 現在のレコードに対する動的表示制御判定結果を算出
+  const visibleFieldsMap = getVisibleFieldsMap(currentRecord);
 
   // 詳細画面
   return (
@@ -380,8 +507,15 @@ function App() {
             return null;
           }
 
+          const currentFid = fields[i];
+
+          // 📌 「入力条件設定」シートによる動的表示制御の適用
+          // E列（対象FID）に含まれる項目であり、かつ表示条件を満たしていない場合は非表示（nullを返す）
+          if (currentFid && visibleFieldsMap[currentFid] === false) {
+            return null;
+          }
+
           const rawValue = currentRecord[h] === undefined || currentRecord[h] === null ? "" : currentRecord[h];
-          const currentFid = fields[i]; 
           
           const isHeading = h && h.includes("■");
 
