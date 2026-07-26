@@ -239,6 +239,7 @@ body {
 /* 📌 ③ タブ選択に合わせた項目カード境界線およびフォーカス色のカスタマイズ */
 .theme-tab1 .card {
   border-left: 4px solid #0078d4;
+  border-right: 4px solid #0078d4;
 }
 
 .theme-tab1 input[type="text"]:focus,
@@ -254,6 +255,7 @@ body {
 .theme-tab2 .card {
   background-color: white;
   border-left: 4px solid #00838f;
+  border-right: 4px solid #00838f;
 }
 
 .theme-tab2 input[type="text"]:focus,
@@ -513,6 +515,7 @@ input[type="file"]::file-selector-button {
   background-color: #f0f2f5 !important;
   border-color: #dcdcdc !important;
   border-left-color: #dcdcdc !important;
+  border-right-color: #dcdcdc !important;
   box-shadow: none;
 }
 
@@ -581,6 +584,7 @@ select:disabled {
 .card.card-error {
   border: 1px solid #ffcdd2 !important;
   border-left: 4px solid #d32f2f !important;
+  border-right: 4px solid #d32f2f !important;
   background-color: #fff8f8 !important; /* ほんのり赤みがかった背景 */
   box-shadow: 0 4px 12px rgba(211, 47, 47, 0.05);
 }
