@@ -56,7 +56,7 @@ function App() {
   }, [activeTab, selectedIndex, screen]);
 
   // ○×判定
-  const isBool = (label) => label && label.includes("○") && label.includes("×");
+  const isBool = (label) => label && label.includes("○") && label.includes("×") && !label.includes("△");
 
   // 入力タイプ判定
   const getInputType = (headerName, value, isFile2 = false) => {
