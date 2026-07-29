@@ -281,22 +281,40 @@ body {
   color: #444;
 }
 
-/* 📌 ■が含まれる見出し（カテゴリ区切り）のスタイル */
-.card.is-heading {
-  background: transparent !important; /* 背景を透明に */
-  border: none !important;            /* 枠線を消す */
-  box-shadow: none;        /* シャドウを消す */
-  padding: 16px 4px 8px 4px; /* 下部に線との間の余白を追加 */
-  margin-bottom: 8px;
-  margin-top: 12px;        /* 上に隙間をあけて区切りを強調 */
+/* 📌 大見出し（■■）のスタイル */
+.card.is-main-heading {
+  background: #0078d4 !important;
+  color: white !important;
+  border: none !important;
+  padding: 12px 16px;
+  margin-top: 16px;
+  margin-bottom: 12px;
   font-size: 16px;
   font-weight: bold;
-  color: #0078d4;          /* メインの青色で強調 */
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.theme-tab2 .card.is-main-heading {
+  background: #00838f !important;
+}
+
+/* 📌 小見出し（■）のスタイル */
+.card.is-sub-heading {
+  background: transparent !important; /* 背景を透明に */
+  border: none !important;            /* 枠線を消す */
+  box-shadow: none;                   /* シャドウを消す */
+  padding: 14px 4px 6px 4px;          /* 余白調整 */
+  margin-bottom: 8px;
+  margin-top: 10px;                   /* 上に隙間をあけて区切りを強調 */
+  font-size: 15px;
+  font-weight: bold;
+  color: #0078d4;                     /* メインの青色で強調 */
   border-bottom: 2px solid #0078d4 !important; /* 同色の線で区切りを分かりやすく */
   border-radius: 0;
 }
 
-.theme-tab2 .card.is-heading {
+.theme-tab2 .card.is-sub-heading {
   color: #00838f;
   border-bottom: 2px solid #00838f !important; /* 点検詳細02の色に合わせて下線を変更 */
 }
