@@ -737,7 +737,6 @@ function App() {
       const rawValue = targetRecord[h] === undefined || targetRecord[h] === null ? "" : targetRecord[h];
       
       // 📌 「■■」が含まれていれば大見出し、「■」が含まれていれば小見出しとして判定
-      // 尚、現状■の文字列が入って入れは見出し項目として画面上に表現するようになっているが、そこの処理を■■の文字列が入っていれば大見出し項目としてに置き換えてほしい。
       const isMainHeading = h && h.includes("■■");
       const isSubHeading = h && !isMainHeading && h.includes("■");
 
