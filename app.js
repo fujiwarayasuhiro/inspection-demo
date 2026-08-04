@@ -710,13 +710,6 @@ function App() {
   const currentRecord1 = records[selectedIndex];
   const currentRecord2 = isTwoFiles ? records2[selectedIndex] : null;
 
-  const isFile2Active = activeTab === "file2";
-  const activeRecord = isFile2Active ? currentRecord2 : currentRecord1;
-  const activeHeaders = isFile2Active ? headers2 : headers;
-  const activeFields = isFile2Active ? fields2 : fields;
-  const activeSelectOptions = isFile2Active ? selectOptions2 : selectOptions;
-  const activeErrorIndices = isFile2Active ? errorIndices2 : errorIndices;
-
   // 📌 入力コンポーネント生成ヘルパー
   const renderFieldsList = (targetHeaders, targetFields, targetRecord, targetSelectOptions, targetErrorIndices, isFile2) => {
     const targetVisibleMap = getVisibleFieldsMap(targetRecord, isFile2);
@@ -851,7 +844,7 @@ function App() {
 
   // 詳細画面
   return (
-    React.createElement("div", { className: "detail-screen" },
+    React.createElement("div", { className: `detail-screen ${isTwoFiles ? "has-tabs" : ""}` },
       React.createElement("div", { className: "sticky-header" },
         React.createElement("div", { className: "header" }, 
           React.createElement("span", { className: "header-ver" }, "Ver.1.0.0"),
@@ -891,7 +884,7 @@ function App() {
           )
         ),
 
-        // 📌 ③ タブボタンのスタイル切り替え（点検詳細01/点検詳細02で色を分ける）
+        // 📌 2ファイル読み込み時のみタブバーを表示（1ファイル時は非表示）
         isTwoFiles && React.createElement("div", { className: "tab-bar-container" },
           React.createElement("button", {
             className: `tab-button tab-01 ${activeTab === "file1" ? "active" : ""}`,
@@ -904,20 +897,20 @@ function App() {
         )
       ),
 
-      /* 📌 ④ 点検詳細01と02のスクロールを独立させた表示領域 */
+      /* 📌 点検詳細01と02のスクロール表示領域 */
       React.createElement("div", { className: "detail-content-scroll" },
         // タブ1 (点検詳細01)
         React.createElement("div", {
           ref: tab1ScrollRef,
           className: "tab-scroll-container theme-tab1",
-          style: { display: activeTab === "file1" ? "block" : "none" }
+          style: { display: (!isTwoFiles || activeTab === "file1") ? "block" : "none" }
         },
           React.createElement("div", { className: "container" },
             renderFieldsList(headers, fields, currentRecord1, selectOptions, errorIndices, false)
           )
         ),
 
-        // タブ2 (点検詳細02)
+        // タブ2 (点検詳細02) - 2ファイル読み込み時のみレンダリング
         isTwoFiles && currentRecord2 && React.createElement("div", {
           ref: tab2ScrollRef,
           className: "tab-scroll-container theme-tab2",
