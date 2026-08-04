@@ -1,8 +1,38 @@
+/* ==========================================
+   点検入力アプリ - モバイルスムース & モダンUIデザイン
+   ========================================== */
+
+:root {
+  --primary-color: #1e40af;       /* メインブルー */
+  --primary-hover: #1d4ed8;
+  --primary-light: #eff6ff;
+  --tab2-color: #0f766e;          /* 点検詳細02用 ティール */
+  --tab2-light: #f0fdf4;
+  --success-color: #15803d;      /* 点検完了・○用 グリーン */
+  --success-bg: #f0fdf4;
+  --danger-color: #dc2626;       /* エラー・×用 レッド */
+  --danger-bg: #fef2f2;
+  --bg-color: #f8fafc;           /* 全体背景 */
+  --card-bg: #ffffff;
+  --text-main: #0f172a;          /* テキスト主要 */
+  --text-sub: #475569;           /* テキストサブ */
+  --border-color: #e2e8f0;       /* 枠線標準 */
+  --border-focus: #3b82f6;
+  --radius-lg: 16px;
+  --radius-md: 10px;
+  --radius-sm: 6px;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #f4f6f9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", sans-serif;
+  background-color: var(--bg-color);
   margin: 0;
-  color: #333;
+  color: var(--text-main);
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1.5;
 }
 
 /* 📌 ヘッダーの共通固定スタイル */
@@ -12,13 +42,14 @@ body {
   left: 0;
   right: 0;
   z-index: 110;
-  background: #0078d4;
+  background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
   color: white;
-  padding: 16px;
+  padding: 14px 16px;
   text-align: center;
-  font-weight: bold;
-  font-size: 18px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.03em;
+  box-shadow: var(--shadow-md);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -27,26 +58,32 @@ body {
 
 /* 📌 バージョン情報のスタイル */
 .header-ver {
-  font-size: 12px;
-  font-weight: normal;
-  opacity: 0.8;
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 12px;
+  letter-spacing: 0;
 }
 
 /* 📌 一覧画面の上部固定エリア対応 */
 .list-screen {
-  padding-top: 70px;
+  padding-top: 66px;
+  padding-bottom: 40px;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .container {
   padding: 16px;
-  max-width: 420px;
+  max-width: 480px;
   margin: auto;
   box-sizing: border-box;
 }
 
 /* 📌 詳細画面の上部固定エリア（タブ表示対応のため余白を調整） */
 .detail-screen {
-  padding-top: 270px;
+  padding-top: 280px;
   height: 100vh;
   box-sizing: border-box;
   display: flex;
@@ -68,11 +105,11 @@ body {
 
 /* 📌 タブテーマごとの入力エリア背景色連動 */
 .tab-scroll-container.theme-tab1 {
-  background-color: #f0f7ff; /* 点検詳細01用のごく薄い青背景 */
+  background-color: #f8fafc; /* 点検詳細01用のごく薄い背景 */
 }
 
 .tab-scroll-container.theme-tab2 {
-  background-color: #f0f8f8; /* 点検詳細02用のごく薄い青緑背景 */
+  background-color: #f4fbfb; /* 点検詳細02用のごく薄いティール背景 */
 }
 
 .sticky-header {
@@ -81,16 +118,17 @@ body {
   left: 0;
   right: 0;
   z-index: 100;
-  background: #f4f6f9;
-  padding-top: 55px; /* ヘッダーの高さ分下げる */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* 境界をわかりやすく */
+  background: var(--bg-color);
+  padding-top: 52px; /* ヘッダーの高さ分下げる */
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08); /* 境界をわかりやすく */
+  border-bottom: 1px solid var(--border-color);
 }
 
 /* 📌 アクションバーの配置 */
 .action-bar {
-  max-width: 420px;
+  max-width: 480px;
   margin: auto;
-  padding: 8px 16px;
+  padding: 10px 16px;
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -106,9 +144,13 @@ body {
 .action-center {
   flex: 1;
   text-align: center;
-  font-weight: bold;
-  color: #555;
-  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-sub);
+  font-size: 14px;
+  background: #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-block;
 }
 
 .action-right {
@@ -119,127 +161,211 @@ body {
 
 /* 📌 点検詳細タブ切り替えスタイルの追加 */
 .tab-bar-container {
-  max-width: 420px;
+  max-width: 480px;
   margin: auto;
-  padding: 0 16px 8px 16px;
+  padding: 0 16px 10px 16px;
   display: flex;
-  gap: 8px;
+  gap: 10px;
   box-sizing: border-box;
 }
 
 .tab-button {
   flex: 1;
-  padding: 10px;
+  padding: 10px 12px;
   font-size: 14px;
-  font-weight: bold;
-  color: #0078d4;
-  background: #e1f0fc;
-  border: 1px solid #0078d4;
-  border-radius: 8px;
+  font-weight: 700;
+  color: var(--primary-color);
+  background: var(--primary-light);
+  border: 1.5px solid #bfdbfe;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .tab-button.active {
-  background: #0078d4;
+  background: var(--primary-color);
   color: white;
-  box-shadow: 0 2px 4px rgba(0, 120, 212, 0.2);
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 10px rgba(30, 64, 175, 0.25);
 }
 
 /* 📌 ③ タブ2（点検詳細02）用のカラー（アクセントの効いたティール/青緑系） */
 .tab-button.tab-02 {
-  color: #00838f;
-  background: #e0f2f1;
-  border-color: #00838f;
+  color: var(--tab2-color);
+  background: #ccfbf1;
+  border-color: #99f6e4;
 }
 
 .tab-button.tab-02.active {
-  background: #00838f;
+  background: var(--tab2-color);
   color: white;
-  box-shadow: 0 2px 4px rgba(0, 131, 143, 0.2);
+  border-color: var(--tab2-color);
+  box-shadow: 0 4px 10px rgba(15, 118, 110, 0.25);
 }
 
 /* 📌 点検完了チェックボックスのスタイル */
 .complete-checkbox-label {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #2e7d32;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--success-color);
+  background: var(--success-bg);
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid #bbf7d0;
   cursor: pointer;
   user-select: none;
+  transition: all 0.2s;
 }
+
+.complete-checkbox-label:hover {
+  background: #dcfce7;
+}
+
 .complete-checkbox-label input {
-  width: 18px;
-  height: 18px;
-  accent-color: #2e7d32;
+  width: 17px;
+  height: 17px;
+  accent-color: var(--success-color);
   margin: 0;
+  cursor: pointer;
 }
 
 /* 🔙 戻るボタンのデザイン */
 .button-back {
-  display: inline-block;
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: bold;
-  color: #0078d4;
-  background: #e1f0fc;
-  border: 1px solid transparent; 
-  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--primary-color);
+  background: var(--primary-light);
+  border: 1px solid #bfdbfe; 
+  border-radius: var(--radius-md);
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 120, 212, 0.1);
-  transition: all 0.2s;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.button-back:hover {
+  background: #dbeafe;
 }
 
 .button-back:active {
-  background: #d0e7f9;
+  background: #bfdbfe;
   transform: translateY(1px);
 }
 
 /* 📌 フローティングバナー（固定表示カード）のスタイル */
 .floating-card-container {
-  max-width: 420px;
+  max-width: 480px;
   margin: auto;
-  padding: 4px 16px 8px 16px;
+  padding: 2px 16px 8px 16px;
   box-sizing: border-box;
 }
 
 .floating-card {
-  background: #edf1f5; /* 固定用として少し色をグレーに変更 */
-  border: 1px solid #ccd4dc; /* 枠線を少し強調 */
-  border-radius: 12px;
-  padding: 12px;
-  font-size: 14px;
-  color: #444;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-  line-height: 1.4;
+  background: #f1f5f9; /* 固定用としてシックな薄いグレー */
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-main);
+  box-shadow: var(--shadow-sm);
+  line-height: 1.45;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 12px;
+}
+
+.floating-card div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.floating-card div:first-child {
+  font-weight: 700;
+  color: var(--primary-color);
 }
 
 /* 点検完了時のフローティングバナー枠色 */
 .floating-card.is-completed {
-  border: 2px solid #2e7d32;
-  background: #e8f5e9; /* 完了時は薄い緑 */
+  border: 1.5px solid var(--success-color);
+  background: var(--success-bg);
 }
 
-/* 📦 通常カードデザイン */
+.floating-card.is-completed div:first-child {
+  color: var(--success-color);
+}
+
+/* 📦 通常カードデザイン（点検一覧・入力フィールド） */
 .card {
-  background: white;
-  border-radius: 12px;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
   padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
   box-sizing: border-box;
-  border: 1px solid #eef2f5;
-  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+/* 一覧画面カード用のアニメーション＆スタイル */
+.list-screen .card {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  padding-right: 40px;
+}
+
+.list-screen .card::after {
+  content: "›";
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+  color: #94a3b8;
+  font-weight: 300;
+  transition: transform 0.2s ease;
+}
+
+.list-screen .card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.list-screen .card:hover::after {
+  transform: translateY(-50%) translateX(3px);
+  color: var(--primary-color);
+}
+
+.list-screen .card div:first-child {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.list-screen .card div:not(:first-child) {
+  font-size: 13px;
+  color: var(--text-sub);
 }
 
 /* 📌 ③ タブ選択に合わせた項目カード境界線およびフォーカス色のカスタマイズ */
 .theme-tab1 .card {
-  border-left: 4px solid #0078d4;
-  border-right: 4px solid #0078d4;
+  border-left: 5px solid var(--primary-color);
 }
 
 .theme-tab1 input[type="text"]:focus,
@@ -247,15 +373,14 @@ body {
 .theme-tab1 input[type="date"]:focus,
 .theme-tab1 input[type="month"]:focus,
 .theme-tab1 select.select-box:focus {
-  border-color: #0078d4;
-  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.15);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
 }
 
 /* 📌 点検詳細02アクティブ時の項目カード境界線およびフォーカス色（青緑系） */
 .theme-tab2 .card {
-  background-color: white;
-  border-left: 4px solid #00838f;
-  border-right: 4px solid #00838f;
+  background-color: var(--card-bg);
+  border-left: 5px solid var(--tab2-color);
 }
 
 .theme-tab2 input[type="text"]:focus,
@@ -263,60 +388,82 @@ body {
 .theme-tab2 input[type="date"]:focus,
 .theme-tab2 input[type="month"]:focus,
 .theme-tab2 select.select-box:focus {
-  border-color: #00838f;
-  box-shadow: 0 0 0 3px rgba(0, 131, 143, 0.15);
+  border-color: var(--tab2-color);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
 }
 
 /* 📌 点検完了時のカードスタイル */
 .card.is-completed {
-  border: 2px solid #2e7d32;
-  background: #e8f5e9 !important; 
-  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.15);
+  border: 1.5px solid var(--success-color) !important;
+  border-left: 5px solid var(--success-color) !important;
+  background: var(--success-bg) !important; 
+  box-shadow: 0 4px 12px rgba(21, 128, 61, 0.12);
+}
+
+.list-screen .card.is-completed div:first-child {
+  color: var(--success-color);
+}
+
+.list-screen .card.is-completed::before {
+  content: "✓ 完了";
+  position: absolute;
+  top: 12px;
+  right: 40px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #bbf7d0;
+  color: var(--success-color);
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 .card-title {
-  font-weight: 600;
-  font-size: 15px;
-  margin-bottom: 12px;
-  color: #444;
+  font-weight: 700;
+  font-size: 14.5px;
+  margin-bottom: 10px;
+  color: var(--text-main);
+  line-height: 1.4;
 }
 
 /* 📌 大見出し（■■）のスタイル */
 .card.is-main-heading {
-  background: #0078d4 !important;
+  background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%) !important;
   color: white !important;
   border: none !important;
-  padding: 12px 16px;
-  margin-top: 16px;
-  margin-bottom: 12px;
-  font-size: 16px;
-  font-weight: bold;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 12px 18px;
+  margin-top: 20px;
+  margin-bottom: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  letter-spacing: 0.02em;
 }
 
 .theme-tab2 .card.is-main-heading {
-  background: #00838f !important;
+  background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%) !important;
 }
 
 /* 📌 小見出し（■）のスタイル */
 .card.is-sub-heading {
-  background: transparent !important; /* 背景を透明に */
-  border: none !important;            /* 枠線を消す */
-  box-shadow: none;                   /* シャドウを消す */
-  padding: 14px 4px 6px 4px;          /* 余白調整 */
-  margin-bottom: 8px;
-  margin-top: 10px;                   /* 上に隙間をあけて区切りを強調 */
-  font-size: 15px;
-  font-weight: bold;
-  color: #0078d4;                     /* メインの青色で強調 */
-  border-bottom: 2px solid #0078d4 !important; /* 同色の線で区切りを分かりやすく */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none;
+  padding: 12px 4px 6px 4px;
+  margin-bottom: 10px;
+  margin-top: 12px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--primary-color) !important;
   border-radius: 0;
+  display: flex;
+  align-items: center;
 }
 
 .theme-tab2 .card.is-sub-heading {
-  color: #00838f;
-  border-bottom: 2px solid #00838f !important; /* 点検詳細02の色に合わせて下線を変更 */
+  color: var(--tab2-color);
+  border-bottom: 2px solid var(--tab2-color) !important;
 }
 
 /* 📌 『』の単位を表示するための横並びスタイル */
@@ -328,14 +475,14 @@ body {
 }
 
 .input-with-unit input {
-  flex: 1; /* 入力欄を可能な限り広げる */
+  flex: 1;
 }
 
 .input-unit-text {
-  font-size: 15px;
-  font-weight: bold;
-  color: #555;
-  white-space: nowrap; /* 単位の改行を防止 */
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-sub);
+  white-space: nowrap;
   padding-right: 4px;
 }
 
@@ -344,28 +491,23 @@ select.select-box {
   width: 100%;
   display: block;
   box-sizing: border-box;
-  padding: 12px;
-  font-size: 16px;
-  border: 1px solid #ccd4dc;
-  border-radius: 8px;
+  padding: 11px 14px;
+  font-size: 15px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
   background-color: #ffffff;
   transition: all 0.2s ease;
-  appearance: none; /* デフォルトの矢印を非表示に */
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
+  background-position: right 14px center;
   background-size: 16px;
-  padding-right: 40px; /* 矢印と文字が被らないように右余白を確保 */
+  padding-right: 40px;
   cursor: pointer;
+  color: var(--text-main);
 }
 
-select.select-box:focus {
-  outline: none;
-  border-color: #0078d4;
-  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.15);
-}
-
-/* ✍️ 入力欄はみ出し防止 */
+/* ✍️ 入力欄基本スタイル */
 input[type="text"],
 input[type="number"],
 input[type="date"],
@@ -373,11 +515,12 @@ input[type="month"] {
   width: 100%;
   display: block;
   box-sizing: border-box;
-  padding: 12px;
-  font-size: 16px;
-  border: 1px solid #ccd4dc;
-  border-radius: 8px;
+  padding: 11px 14px;
+  font-size: 15px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
   background-color: #ffffff;
+  color: var(--text-main);
   transition: all 0.2s ease;
 }
 
@@ -386,12 +529,11 @@ input[type="number"]:focus,
 input[type="date"]:focus,
 input[type="month"]:focus {
   outline: none;
-  border-color: #0078d4;
+  border-color: var(--border-focus);
   background-color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.15);
 }
 
-/* 🔘 ラジオボタン基本構造 */
+/* 🔘 ラジオボタン基本構造（モダン・タップしやすいボタンスタイル） */
 .radio-row {
   display: flex;
   justify-content: flex-start;
@@ -407,93 +549,114 @@ input[type="month"]:focus {
   justify-content: center;
   gap: 8px;
   padding: 12px;
-  background: #f0f4f8;
+  background: #f1f5f9;
   border: 2px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-weight: bold;
-  font-size: 18px;
-  transition: all 0.2s;
+  font-weight: 700;
+  font-size: 17px;
+  transition: all 0.2s ease;
   user-select: none;
-  color: #666;
+  color: var(--text-sub);
 }
 
 .radio-item input[type="radio"] {
   width: 18px;
   height: 18px;
   margin: 0;
+  cursor: pointer;
 }
 
 /* 🟢 ○（緑色）のスタイル */
 .radio-item.is-maru input[type="radio"] {
-  accent-color: #2e7d32;
+  accent-color: var(--success-color);
 }
+
 .radio-item.is-maru:has(input[type="radio"]:checked) {
-  background: #e8f5e9;
-  border-color: #2e7d32;
-  color: #2e7d32;
+  background: var(--success-bg);
+  border-color: var(--success-color);
+  color: var(--success-color);
+  box-shadow: 0 2px 8px rgba(21, 128, 61, 0.15);
 }
 
 /* 🔴 ×（赤色）のスタイル */
 .radio-item.is-batsu input[type="radio"] {
-  accent-color: #d32f2f;
-}
-.radio-item.is-batsu:has(input[type="radio"]:checked) {
-  background: #ffebee;
-  border-color: #d32f2f;
-  color: #d32f2f;
+  accent-color: var(--danger-color);
 }
 
-/* 🚀 ダウンロードボタン等 */
+.radio-item.is-batsu:has(input[type="radio"]:checked) {
+  background: var(--danger-bg);
+  border-color: var(--danger-color);
+  color: var(--danger-color);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.15);
+}
+
+/* 🚀 エクセル保存ボタン等 */
 .button {
   display: block;
   width: 100%;
   padding: 14px;
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 700;
   color: white;
-  background: #0078d4;
+  background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0, 120, 212, 0.2);
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25);
   transition: all 0.2s ease;
   text-align: center;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: 16px;
+  margin-bottom: 12px;
+}
+
+.button:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  box-shadow: 0 6px 16px rgba(30, 64, 175, 0.3);
 }
 
 .button:active {
   transform: translateY(1px);
-  box-shadow: 0 2px 4px rgba(0, 120, 212, 0.2);
-  background: #0066b3;
+  box-shadow: 0 2px 6px rgba(30, 64, 175, 0.2);
 }
 
-/* 📁 ファイルアップロード（点線デザイン） */
+/* 📁 ファイルアップロード（モダンなドラッグ＆ドロップ風カード） */
 .file-wrapper-box {
-  background: #fff;
-  border: 1px dashed #ccd4dc; 
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 16px;
+  background: #ffffff;
+  border: 2px dashed #cbd5e1; 
+  border-radius: var(--radius-lg);
+  padding: 20px 16px;
+  margin-bottom: 20px;
   box-sizing: border-box;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.file-wrapper-box:hover {
+  border-color: var(--primary-color);
+  background: var(--primary-light);
 }
 
 input[type="file"] {
   width: 100%;
   font-size: 14px;
-  color: #555;
+  color: var(--text-sub);
 }
 
 input[type="file"]::file-selector-button {
-  background: #e1f0fc;
-  color: #0078d4;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: bold;
+  background: var(--primary-light);
+  color: var(--primary-color);
+  border: 1px solid #bfdbfe;
+  padding: 9px 18px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
   margin-right: 12px;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: #dbeafe;
 }
 
 /* 🔙 「戻る」で表示される、消えないファイル表示枠 */
@@ -501,62 +664,71 @@ input[type="file"]::file-selector-button {
   display: flex;
   align-items: center;
   width: 100%;
+  text-align: left;
 }
 
 .fake-file-button {
-  background: #e1f0fc;
-  color: #0078d4;
-  font-size: 14px;
-  font-weight: bold;
+  background: var(--primary-light);
+  color: var(--primary-color);
+  font-size: 13.5px;
+  font-weight: 700;
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid #bfdbfe;
   margin-right: 12px;
   cursor: pointer;
   user-select: none;
   display: inline-block;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.fake-file-button:hover {
+  background: #dbeafe;
 }
 
 /* 📌 ② 2ファイル選択時に改行して2段で綺麗に表示する処理 */
 .fake-file-text {
   font-size: 13px;
-  color: #333;
+  color: var(--text-main);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: pre-wrap;
   word-break: break-all;
   flex: 1;
-  line-height: 1.3;
+  line-height: 1.4;
+  font-weight: 500;
 }
 
-/* カード全体の背景を薄いグレーにし、操作不可のカーソルにする */
+/* カード全体の背景をグレーにし、操作不可のカーソルにする */
 .card.is-disabled-card {
-  background-color: #f0f2f5 !important;
-  border-color: #dcdcdc !important;
-  border-left-color: #dcdcdc !important;
-  border-right-color: #dcdcdc !important;
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  border-left-color: #cbd5e1 !important;
   box-shadow: none;
+  opacity: 0.75;
 }
 
 /* タイトル文字の色を薄くする */
 .card.is-disabled-card .card-title {
-  color: #888888;
+  color: #94a3b8;
 }
 
 /* テキスト、数値、日付、セレクトボックスのグレーアウト */
 input:disabled,
 select:disabled {
-  background-color: #e4e7eb !important;
-  color: #777777 !important;
-  border-color: #ccd4dc !important;
+  background-color: #e2e8f0 !important;
+  color: #64748b !important;
+  border-color: #cbd5e1 !important;
   cursor: not-allowed;
   opacity: 1; /* iOSでの文字薄れ防止 */
-  -webkit-text-fill-color: #777777; /* iOSでの文字色固定 */
+  -webkit-text-fill-color: #64748b; /* iOSでの文字色固定 */
 }
 
 /* ラジオボタン枠のグレーアウト */
 .radio-item.is-disabled {
-  background-color: #e4e7eb;
-  color: #aaaaaa;
+  background-color: #e2e8f0;
+  color: #94a3b8;
   cursor: not-allowed;
   border-color: transparent !important;
 }
@@ -568,16 +740,16 @@ select:disabled {
 
 /* 単位テキストの色も薄くする */
 .card.is-disabled-card .input-unit-text {
-  color: #888888;
+  color: #94a3b8;
 }
 
 /* 項目タイトルとバッジを綺麗に横並びにする */
 .card-title-row {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* 両端に寄せる */
+  justify-content: space-between;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 /* card-title-rowの中のタイトルは下部マージンをリセット */
@@ -588,43 +760,43 @@ select:disabled {
 
 /* 「必須」の赤色の白抜きバッジ */
 .required-badge {
-  background-color: #d32f2f;
+  background-color: var(--danger-color);
   color: #ffffff;
-  font-size: 11px;
-  font-weight: bold;
-  padding: 3px 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
   border-radius: 4px;
   white-space: nowrap;
-  line-height: 1;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
 }
 
-/* 未入力エラー時のカード枠線（うっすら赤くする） */
+/* 未入力エラー時のカード枠線（クリアに通知） */
 .card.card-error {
-  border: 1px solid #ffcdd2 !important;
-  border-left: 4px solid #d32f2f !important;
-  border-right: 4px solid #d32f2f !important;
-  background-color: #fff8f8 !important; /* ほんのり赤みがかった背景 */
-  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.05);
+  border: 1px solid #fca5a5 !important;
+  border-left: 5px solid var(--danger-color) !important;
+  background-color: var(--danger-bg) !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.08);
 }
 
 /* 未入力エラー時の入力フォーム枠線 */
 input.input-error,
 select.input-error {
-  border-color: #d32f2f !important;
-  background-color: #fff8f8;
+  border-color: var(--danger-color) !important;
+  background-color: #ffffff;
 }
 
 /* 未入力エラー時用のフォーカス */
 input.input-error:focus,
 select.input-error:focus {
-  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.15) !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
 }
 
 /* 項目下部に表示される「未入力です」のテキスト */
 .error-message-text {
-  color: #d32f2f;
-  font-size: 13px;
-  font-weight: bold;
+  color: var(--danger-color);
+  font-size: 12.5px;
+  font-weight: 700;
   margin-top: 8px;
   display: flex;
   align-items: center;
@@ -640,13 +812,13 @@ select.input-error:focus {
 /* 📱 スマホ最適化 */
 @media (max-width: 480px) {
   .list-screen {
-    padding-top: 60px;
+    padding-top: 58px;
   }
   .detail-screen {
-    padding-top: 250px;
+    padding-top: 260px;
   }
   .action-bar {
-    padding: 6px 12px;
+    padding: 8px 12px;
   }
   .container {
     padding: 12px;
@@ -654,6 +826,7 @@ select.input-error:focus {
   .card {
     padding: 14px;
     margin-bottom: 12px;
+    border-radius: var(--radius-md);
   }
   
   input[type="text"],
@@ -661,10 +834,10 @@ select.input-error:focus {
   input[type="date"],
   input[type="month"],
   select.select-box {
-    padding: 10px;
-    font-size: 16px; 
+    padding: 10px 12px;
+    font-size: 16px; /* iOSのズーム防止のため16pxを維持 */
     box-sizing: border-box; 
-    height: 45px; 
+    height: 44px; 
     display: inline-flex;  
     align-items: center;   
   }
