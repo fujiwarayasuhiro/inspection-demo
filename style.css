@@ -837,18 +837,26 @@ select.input-error:focus {
   font-weight: bold;
 }
 
-/* プレースホルダー表示エリア */
+/* プレースホルダーの親要素：上下左右の中央に配置 */
 .placeholder-container {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 50px 0 30px 0;
+  flex-direction: column;
+  justify-content: center; /* 上下方向の中央揃え */
+  align-items: center;     /* 左右方向の中央揃え */
+  
+  /* 表示エリアの高さ調整（画面に合わせる場合） */
+  min-height: 40vh;        /* 画面高さの約40%を確保して中央に寄せる */
   width: 100%;
+  margin: 0 auto;
+  text-align: center;
 }
 
-/* SVGアニメーション（ふんわり浮く感じを出す場合：お好みで） */
-.placeholder-svg {
-  filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.05));
+/* SVGまたは画像のスタイル */
+.placeholder-svg,
+.placeholder-image {
+  display: block;
+  margin: 0 auto;          /* 念のためのマージン中央揃え */
+  filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.05)); /* ほんのり影 */
 }
 
 /* 📱 スマホ最適化 */
