@@ -718,7 +718,9 @@ select.input-error:focus {
   font-weight: bold;
 }
 
-/* 情報表示画面スタイル */
+/* ====================================================
+   1. タイル（カード）がヘッダー下に隠れる問題の修正
+   ==================================================== */
 .info-screen {
   min-height: 100vh;
   background-color: #f8f9fa;
@@ -726,19 +728,70 @@ select.input-error:focus {
   flex-direction: column;
 }
 
-/* ヘッダーの固定（sticky）設定時にも被らないよう上部余白を設定 */
+/* 
+ * ヘッダーの高さ（約50px〜60px）＋十分な余白を確保するため 
+ * padding-top を 80px〜90px 前後に設定
+ */
 .info-container {
-  padding: 20px;
-  margin-top: 10px;
+  padding: 80px 20px 20px 20px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .info-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   font-size: 16px;
   line-height: 1.6;
+  border: 1px solid #e9ecef;
+}
+
+/* ====================================================
+   2. メニュー一覧のスライド＆フェードアニメーション
+   ==================================================== */
+/* オーバーレイ（暗い背景）のアニメーション */
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.25s ease-in-out;
+}
+
+.menu-overlay.active {
+  opacity: 1;
+}
+
+.menu-overlay.closing {
+  opacity: 0;
+}
+
+/* メニュー本体（左側からのスライドイン）のアニメーション */
+.menu-content {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100%;
+  background-color: #ffffff;
+  z-index: 1000;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+  transform: translateX(-100%);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.menu-content.active {
+  transform: translateX(0);
+}
+
+.menu-content.closing {
+  transform: translateX(-100%);
 }
 
 /* 📱 スマホ最適化 */
