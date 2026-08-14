@@ -1032,6 +1032,53 @@ function App() {
             )
           ),
 
+          /* 📌 ファイル未読み込み時のイラストアイコン表示 */
+          records.length === 0 && React.createElement("div", { className: "placeholder-container" },
+            React.createElement("svg", {
+              width: "160",
+              height: "180",
+              viewBox: "0 0 160 180",
+              fill: "none",
+              xmlns: "http://www.w3.org/2000/svg",
+              className: "placeholder-svg"
+            },
+              // 背景のソフトな丸
+              React.createElement("circle", { cx: "80", cy: "90", r: "75", fill: "#eef6ff" }),
+
+              // クリップボード本体
+              React.createElement("rect", { x: "35", y: "30", width: "80", height: "105", rx: "10", fill: "#ffffff", stroke: "#5b88b2", strokeWidth: "4" }),
+              
+              // クリップ部分
+              React.createElement("rect", { x: "57", y: "20", width: "36", height: "18", rx: "5", fill: "#d2e4f7", stroke: "#5b88b2", strokeWidth: "3" }),
+              React.createElement("circle", { cx: "75", cy: "27", r: "3", fill: "#5b88b2" }),
+
+              // はてなマーク 「？」
+              React.createElement("text", {
+                x: "73",
+                y: "95",
+                fontSize: "48",
+                fontWeight: "bold",
+                fill: "#2b6cb0",
+                fontFamily: "sans-serif",
+                textAnchor: "middle"
+              }, "?"),
+
+              // 歯車マーク（右下）
+              React.createElement("g", { transform: "translate(95, 105)" },
+                // 歯車の外枠＆歯
+                React.createElement("path", {
+                  d: "M22 0L25 5C28 6 31 8 33 10L39 8L42 14L37 18C38 21 38 24 37 27L42 31L39 37L33 35C31 37 28 39 25 40L22 45H16L13 40C10 39 7 37 5 35L-1 37L-4 31L1 27C0 24 0 21 1 18L-4 14L-1 8L5 10C7 8 10 6 13 5L16 0H22Z",
+                  fill: "#ffffff",
+                  stroke: "#4a75a0",
+                  strokeWidth: "3.5",
+                  strokeLinejoin: "round"
+                }),
+                // 歯車の中心穴
+                React.createElement("circle", { cx: "19", cy: "22.5", r: "8", fill: "#eef6ff", stroke: "#4a75a0", strokeWidth: "3.5" })
+              )
+            )
+          ),
+                            
           renderListCards,
           
           records.length > 0 &&
