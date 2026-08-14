@@ -722,17 +722,21 @@ select.input-error:focus {
 .info-screen {
   min-height: 100vh;
   background-color: #f8f9fa;
+  display: flex;
+  flex-direction: column;
 }
 
+/* ヘッダーの固定（sticky）設定時にも被らないよう上部余白を設定 */
 .info-container {
   padding: 20px;
+  margin-top: 10px;
 }
 
 .info-card {
   background: #fff;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   font-size: 16px;
   line-height: 1.6;
 }
