@@ -831,6 +831,12 @@ select.input-error:focus {
   font-weight: bold;
 }
 
+/* ファイル未選択時のテキストを赤色（強調）に指定 */
+.fake-file-text.is-empty-text {
+  color: #e53e3e;
+  font-weight: bold;
+}
+
 /* 📱 スマホ最適化 */
 @media (max-width: 480px) {
   .list-screen {
