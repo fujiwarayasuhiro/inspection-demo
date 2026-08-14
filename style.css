@@ -666,6 +666,51 @@ select.input-error:focus {
   cursor: pointer;
 }
 
+/* 📌 セクションラベル用スタイル */
+.section-label {
+  font-weight: bold;
+  font-size: 15px;
+  color: #333;
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
+/* 点検業務選択プルダウン用追加スタイル */
+.task-select {
+  margin-bottom: 16px;
+}
+
+.file-selection-area {
+  margin-bottom: 16px;
+}
+
+/* 📌 トースト通知スタイル */
+.toast-notification {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #323232;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  z-index: 1000;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  text-align: center;
+  max-width: 90%;
+  word-break: break-word;
+  animation: fadeInOut 4s forwards;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, -10px); }
+  10% { opacity: 1; transform: translate(-50%, 0); }
+  90% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -10px); }
+}
+
 /* ====================================================
    1. アプリバージョン情報・ライセンス情報画面のレイアウト調整
    ==================================================== */
