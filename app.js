@@ -686,28 +686,52 @@ function App() {
     return visibleMap;
   };
 
-  // 📌 メニュー側から共通で描画するサイドメニューUI
+  // JS内のメニュー描画部分（renderSideMenu）の更新
+
+  // 📌 メニューの開閉アニメーション状態を管理するため、アニメーション用のStateを追加（App関数内に配置）
+  const [isMenuAnimating, setIsMenuAnimating] = useState(false);
+  
+  // メニューを閉じる際のアニメーションハンドラー
+  const closeMenuWithAnimation = () => {
+    setIsMenuAnimating(true);
+    setTimeout(() => {
+      setIsMenuOpen(false);
+      setIsMenuAnimating(false);
+    }, 250); // CSSのアニメーション時間（0.25s）に合わせる
+  };
+  
+  // 📌 サイドメニュー描画ロジックの更新
   const renderSideMenu = () => {
     if (!isMenuOpen) return null;
-    return React.createElement("div", { className: "menu-overlay", onClick: () => setIsMenuOpen(false) },
-      React.createElement("div", { className: "menu-content", onClick: (e) => e.stopPropagation() },
-        React.createElement("div", { className: "menu-header" }, "メニュー"),
+  
+    return React.createElement("div", { 
+      className: `menu-overlay ${isMenuAnimating ? "closing" : "active"}`, 
+      onClick: closeMenuWithAnimation 
+    },
+      React.createElement("div", { 
+        className: `menu-content ${isMenuAnimating ? "closing" : "active"}`, 
+        onClick: (e) => e.stopPropagation() 
+      },
+        React.createElement("div", { className: "menu-header" }, "メニュー一覧"),
         React.createElement("ul", { className: "menu-list" },
           React.createElement("li", {
             onClick: () => {
-              setIsMenuOpen(false);
+              closeMenuWithAnimation();
               setScreen("app-version");
             }
           }, "アプリバージョン情報"),
           React.createElement("li", {
             onClick: () => {
-              setIsMenuOpen(false);
+              closeMenuWithAnimation();
               setScreen("license");
             }
           }, "ライセンス情報"),
           React.createElement("li", {
             className: "menu-item-exit",
-            onClick: handleExitApp
+            onClick: () => {
+              closeMenuWithAnimation();
+              handleExitApp();
+            }
           }, "点検入力アプリを終了する")
         )
       )
