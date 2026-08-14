@@ -11,8 +11,9 @@ function App() {
   const [fields2, setFields2] = useState([]);
   const [wb1, setWb1] = useState(null);
   const [wb2, setWb2] = useState(null);
-  const [paramInfo1, setParamInfo1] = useState({ name: "", kubun: "", total: "" });
-  const [paramInfo2, setParamInfo2] = useState({ name: "", kubun: "", total: "" });
+  // 📌 パラメータ情報のStateに cardColumns（カード表示列数）を追加
+  const [paramInfo1, setParamInfo1] = useState({ name: "", kubun: "", total: "", cardColumns: "4" });
+  const [paramInfo2, setParamInfo2] = useState({ name: "", kubun: "", total: "", cardColumns: "4" });
   const [isTwoFiles, setIsTwoFiles] = useState(false);
   const [activeTab, setActiveTab] = useState("file1"); // "file1" | "file2"
 
@@ -135,14 +136,16 @@ function App() {
           const currentFields = rows[1] || [];
 
           // パラメータ設定シートの読込
-          let paramInfo = { name: "", kubun: "", total: "" };
+          let paramInfo = { name: "", kubun: "", total: "", cardColumns: "4" };
           const paramSheet = wb.Sheets["パラメータ設定"];
           if (paramSheet) {
             const pRows = XLSX.utils.sheet_to_json(paramSheet, { header: 1 });
             paramInfo = {
               name: pRows[1] ? String(pRows[1][0] || "").trim() : "",
               kubun: pRows[2] ? String(pRows[2][0] || "").trim() : "",
-              total: pRows[3] ? String(pRows[3][0] || "").trim() : ""
+              total: pRows[3] ? String(pRows[3][0] || "").trim() : "",
+              // 📌 A7セル（7行目・インデックス6のA列）からカード表示列数を取得
+              cardColumns: pRows[6] && pRows[6][0] !== undefined && pRows[6][0] !== null ? String(pRows[6][0]).trim() : "4"
             };
           }
 
@@ -557,6 +560,8 @@ function App() {
 
   // 高速化キャッシュ処理 (1ファイル目のレコードのみ一覧表示)
   const renderListCards = useMemo(() => {
+    // 📌 パラメータ設定のA7セル（cardColumns）から表示する列数を動的に決定（デフォルトは4）
+    const colCount = parseInt(paramInfo1.cardColumns, 10) || 4;
     return records.map((rec, i) =>
       React.createElement("div", {
         key: i,
@@ -569,14 +574,14 @@ function App() {
           setScreen("detail");
         }
       },
-        headers.slice(0, 4).map((h, idx) =>
+        headers.slice(0, colCount).map((h, idx) =>
           React.createElement("div", { key: idx },
             String(rec[h] || "")
           )
         )
       )
     );
-  }, [records, headers]);
+  }, [records, headers, paramInfo1.cardColumns]);
 
   // 📌 「入力条件設定」に基づく動的表示可否の算出ロジック
   const getVisibleFieldsMap = (currentRecord, isFile2 = false) => {
@@ -883,7 +888,8 @@ function App() {
           React.createElement("div", { 
             className: `floating-card ${currentRecord1._isCompleted ? "is-completed" : ""}` 
           },
-            headers.slice(0, 4).map((h, idx) =>
+            // 📌 パラメータ設定のA7セル（cardColumns）から表示する列数を動的に決定（デフォルトは4）
+            headers.slice(0, parseInt(paramInfo1.cardColumns, 10) || 4).map((h, idx) =>
               React.createElement("div", { key: idx },
                 String(currentRecord1[h] || "")
               )
