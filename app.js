@@ -17,7 +17,9 @@ function App() {
   const [isTwoFiles, setIsTwoFiles] = useState(false);
   const [activeTab, setActiveTab] = useState("file1"); // "file1" | "file2"
 
-  const [screen, setScreen] = useState("list");
+  const [screen, setScreen] = useState("list"); // "list" | "detail" | "app-version" | "license"
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // ハンバーガーメニュー開閉
+
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [numericFields, setNumericFields] = useState([]);
   const [dateFields, setDateFields] = useState([]);
@@ -558,6 +560,17 @@ function App() {
     }
   };
 
+  // 📌 アプリ終了時のダイアログ処理
+  const handleExitApp = () => {
+    setIsMenuOpen(false);
+    const confirmed = window.confirm(
+      "点検入力アプリを終了しますか？\n(補足：現在点検入力中の内容は破棄されます)"
+    );
+    if (confirmed) {
+      window.location.reload(); // アプリをリセットして初期状態に戻す
+    }
+  };
+
   // 高速化キャッシュ処理 (1ファイル目のレコードのみ一覧表示)
   const renderListCards = useMemo(() => {
     // 📌 パラメータ設定のA7セル（cardColumns）から表示する列数を動的に決定（デフォルトは4）
@@ -673,12 +686,84 @@ function App() {
     return visibleMap;
   };
 
+  // 📌 メニュー側から共通で描画するサイドメニューUI
+  const renderSideMenu = () => {
+    if (!isMenuOpen) return null;
+    return React.createElement("div", { className: "menu-overlay", onClick: () => setIsMenuOpen(false) },
+      React.createElement("div", { className: "menu-content", onClick: (e) => e.stopPropagation() },
+        React.createElement("div", { className: "menu-header" }, "メニュー一覧"),
+        React.createElement("ul", { className: "menu-list" },
+          React.createElement("li", {
+            onClick: () => {
+              setIsMenuOpen(false);
+              setScreen("app-version");
+            }
+          }, "アプリバージョン情報"),
+          React.createElement("li", {
+            onClick: () => {
+              setIsMenuOpen(false);
+              setScreen("license");
+            }
+          }, "ライセンス情報"),
+          React.createElement("li", {
+            className: "menu-item-exit",
+            onClick: handleExitApp
+          }, "点検入力アプリを終了する")
+        )
+      )
+    );
+  };
+
+  // 📌 アプリバージョン情報画面
+  if (screen === "app-version") {
+    return (
+      React.createElement("div", { className: "info-screen" },
+        React.createElement("div", { className: "header" },
+          React.createElement("button", {
+            className: "header-back-btn",
+            onClick: () => setScreen("list")
+          }, "＜戻る"),
+          "アプリバージョン情報"
+        ),
+        React.createElement("div", { className: "container info-container" },
+          React.createElement("div", { className: "info-card" },
+            "アプリバージョン：Ver.1.0.0"
+          )
+        )
+      )
+    );
+  }
+
+  // 📌 ライセンス情報画面
+  if (screen === "license") {
+    return (
+      React.createElement("div", { className: "info-screen" },
+        React.createElement("div", { className: "header" },
+          React.createElement("button", {
+            className: "header-back-btn",
+            onClick: () => setScreen("list")
+          }, "＜戻る"),
+          "ライセンス情報"
+        ),
+        React.createElement("div", { className: "container info-container" },
+          React.createElement("div", { className: "info-card" },
+            "OSSライセンス情報：SheetJS (Apache License 2.0), React (MIT License)"
+          )
+        )
+      )
+    );
+  }
+
   // 一覧画面
   if (screen === "list") {
     return (
       React.createElement("div", { className: "list-screen" },
+        renderSideMenu(),
         React.createElement("div", { className: "header" }, 
-          React.createElement("span", { className: "header-ver" }, "Ver.1.0.0"),
+          React.createElement("button", {
+            className: "hamburger-btn",
+            onClick: () => setIsMenuOpen(true)
+          }, "Ξ"),
           "点検入力アプリ"
         ),
         React.createElement("div", { className: "container" },
@@ -857,9 +942,13 @@ function App() {
   // 詳細画面
   return (
     React.createElement("div", { className: "detail-screen" },
+      renderSideMenu(),
       React.createElement("div", { className: "sticky-header" },
         React.createElement("div", { className: "header" }, 
-          React.createElement("span", { className: "header-ver" }, "Ver.1.0.0"),
+          React.createElement("button", {
+            className: "hamburger-btn",
+            onClick: () => setIsMenuOpen(true)
+          }, "Ξ"),
           "点検詳細入力"
         ),
         React.createElement("div", { className: "action-bar" },
