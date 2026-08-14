@@ -837,6 +837,20 @@ select.input-error:focus {
   font-weight: bold;
 }
 
+/* プレースホルダー表示エリア */
+.placeholder-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 50px 0 30px 0;
+  width: 100%;
+}
+
+/* SVGアニメーション（ふんわり浮く感じを出す場合：お好みで） */
+.placeholder-svg {
+  filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.05));
+}
+
 /* 📱 スマホ最適化 */
 @media (max-width: 480px) {
   .list-screen {
