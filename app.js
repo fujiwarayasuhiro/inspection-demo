@@ -43,6 +43,46 @@ function App() {
   const [displayRules, setDisplayRules] = useState([]);
   const [displayRules2, setDisplayRules2] = useState([]);
 
+  // 📌 新規追加 State: 点検業務選択プルダウンと個別のファイル選択表示用
+  const [selectedTask, setSelectedTask] = useState("");
+  const [file1Obj, setFile1Obj] = useState(null);
+  const [file2Obj, setFile2Obj] = useState(null);
+  const [file1NameText, setFile1NameText] = useState("点検詳細01が選択されていません");
+  const [file2NameText, setFile2NameText] = useState("点検詳細02が選択されていません");
+  const [toastMessage, setToastMessage] = useState("");
+
+  const fileInputRef1 = useRef(null);
+  const fileInputRef2 = useRef(null);
+
+  // 点検業務プルダウン選択肢リスト
+  const taskOptions = [
+    { label: "01.エアコン", value: "1" },
+    { label: "02.吸収冷温水機", value: "2" },
+    { label: "03.冷却塔", value: "3" },
+    { label: "04.チラー冷凍機", value: "4" },
+    { label: "05.ボイラ・温水", value: "5" },
+    { label: "06.ポンプ", value: "6" },
+    { label: "08.フロン漏えい点検記録簿", value: "8" },
+    { label: "09.フロン簡易点検", value: "9" },
+    { label: "14.空気調和機", value: "14" },
+    { label: "15.ろ過器", value: "15" },
+    { label: "16.ファンコイル", value: "16" },
+    { label: "20.ばい煙測定", value: "20" },
+    { label: "22.給排気ファン", value: "22" },
+    { label: "29.付帯設備点検", value: "29" }
+  ];
+
+  // 2つボタンを表示する対象の点検業務値（02, 05, 20）
+  const isTwoButtonsTask = ["2", "5", "20"].includes(selectedTask);
+
+  // トースト通知の表示関数
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage("");
+    }, 4000);
+  };
+
   // 📌 ④ タブごとのスクロール用Refを追加（独立スクロール制御）
   const tab1ScrollRef = useRef(null);
   const tab2ScrollRef = useRef(null);
@@ -138,7 +178,7 @@ function App() {
           const currentFields = rows[1] || [];
 
           // パラメータ設定シートの読込
-          let paramInfo = { name: "", kubun: "", total: "", cardColumns: "4" };
+          let paramInfo = { name: "", kubun: "", total: "", cardColumns: "4", a3: "", a6: "" };
           const paramSheet = wb.Sheets["パラメータ設定"];
           if (paramSheet) {
             const pRows = XLSX.utils.sheet_to_json(paramSheet, { header: 1 });
@@ -147,8 +187,24 @@ function App() {
               kubun: pRows[2] ? String(pRows[2][0] || "").trim() : "",
               total: pRows[3] ? String(pRows[3][0] || "").trim() : "",
               // 📌 A7セル（7行目・インデックス6のA列）からカード表示列数を取得
-              cardColumns: pRows[6] && pRows[6][0] !== undefined && pRows[6][0] !== null ? String(pRows[6][0]).trim() : "4"
+              cardColumns: pRows[6] && pRows[6][0] !== undefined && pRows[6][0] !== null ? String(pRows[6][0]).trim() : "4",
+              a3: pRows[2] ? String(pRows[2][0] || "").trim() : "",
+              a6: pRows[5] ? String(pRows[5][0] || "").trim() : ""
             };
+          }
+
+          // 初期値設定シートの読込
+          const initValuesMap = {};
+          const initSheet = wb.Sheets["初期値設定"];
+          if (initSheet) {
+            const initRows = XLSX.utils.sheet_to_json(initSheet);
+            initRows.forEach(row => {
+              const fid = row["FID"];
+              const val = row["初期値"];
+              if (fid !== undefined && fid !== null) {
+                initValuesMap[String(fid).trim()] = val !== undefined && val !== null ? val : "";
+              }
+            });
           }
 
           // 選択肢一覧設定シートの読込
@@ -255,6 +311,7 @@ function App() {
             optionsMap,
             rules,
             paramInfo,
+            initValuesMap,
             fileName: file.name
           });
         } catch (err) {
@@ -265,17 +322,25 @@ function App() {
     });
   };
 
-  // Excel読込 (1ファイルまたは2ファイル対応)
-  const handleUpload = async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
+  // 点検業務プルダウン変更ハンドラー
+  const handleTaskChange = (e) => {
+    setSelectedTask(e.target.value);
+    // 状態のリセット
+    setFile1Obj(null);
+    setFile2Obj(null);
+    setFile1NameText("点検詳細01が選択されていません");
+    setFile2NameText("点検詳細02が選択されていません");
+    setRecords([]);
+    setRecords2([]);
+    setFileName("");
+    if (fileInputRef1.current) fileInputRef1.current.value = "";
+    if (fileInputRef2.current) fileInputRef2.current.value = "";
+  };
 
-    // 📌 ① エクセルファイルが3個以上選択された場合の制限ポップアップ
-    if (files.length > 2) {
-      alert("エクセルファイルの選択は最大2個までです");
-      e.target.value = "";
-      return;
-    }
+  // ファイル選択ボタン1の変更ハンドラー
+  const handleFile1Select = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
 
     if (!window.XLSX) {
       alert("SheetJSライブラリが読み込まれていません。");
@@ -283,18 +348,45 @@ function App() {
     }
 
     try {
-      if (files.length === 1) {
-        const res = await parseSingleFile(files[0]);
+      const res = await parseSingleFile(file);
 
-        // 📌 ① エクセルファイルを１つだけ読み込んだとき、4行目のファイル総数が2だったら3行目の区分の数字を見て無い方の区分のファイルが選択されていませんとポップアップを出す
-        if (res.paramInfo && res.paramInfo.total === "2") {
-          const missingKubun = res.paramInfo.kubun === "1" ? "2" : "1";
-          alert(`区分${missingKubun}のファイルが選択されていません`);
-          // 選択状態をリセット
+      // エラーチェック: シート「パラメータ設定」が存在すること
+      if (!res.wb.Sheets["パラメータ設定"]) {
+        alert("読み込んだエクセルファイルがオフライン専用入力アプリに対応したものではありません");
+        e.target.value = "";
+        return;
+      }
+
+      // エラーチェック: 「パラメータ設定」シート A6セルとプルダウンの選択肢番号の一致
+      if (res.paramInfo.a6 !== selectedTask) {
+        alert("読み込んだエクセルファイルがプルダウンメニューから選択した点検業務のものではありません");
+        e.target.value = "";
+        return;
+      }
+
+      // 2ボタンの場合の追加チェック: A3セルの値が「1」であること
+      if (isTwoButtonsTask) {
+        if (res.paramInfo.a3 !== "1") {
+          alert("読み込んだエクセルファイルが点検詳細01のものではありません");
           e.target.value = "";
           return;
         }
+      }
 
+      // エラーチェック: インポート用シート A3セルに値があること (records[0]の1列目が存在するか)
+      const importSheet = res.wb.Sheets[res.wb.SheetNames[0]];
+      const importRows = XLSX.utils.sheet_to_json(importSheet, { header: 1 });
+      if (!importRows || !importRows[2] || importRows[2][0] === undefined || importRows[2][0] === null || String(importRows[2][0]).trim() === "") {
+        alert("読み込んだエクセルファイルが空レコードです");
+        e.target.value = "";
+        return;
+      }
+
+      setFile1Obj(res);
+      setFile1NameText(file.name);
+
+      if (!isTwoButtonsTask) {
+        // 1ボタンの場合：即時読み込み成功処理
         setWb1(res.wb);
         setHeaders(res.headers);
         setFields(res.fields);
@@ -308,70 +400,156 @@ function App() {
 
         setIsTwoFiles(false);
         setFileName(res.fileName);
-        alert("ファイルの読み込み成功しました");
-      } else if (files.length === 2) {
-        const parsedFiles = await Promise.all([parseSingleFile(files[0]), parseSingleFile(files[1])]);
-
-        let f1 = parsedFiles[0];
-        let f2 = parsedFiles[1];
-
-        // 📌 パラメータ設定シートのチェック
-        // 1. 2行目の点検名が両ファイルで一致しているか
-        if (f1.paramInfo.name !== f2.paramInfo.name) {
-          alert("エラー：2行目の点検名が両ファイルで一致していません。");
-          return;
-        }
-
-        // 2. 4行目のファイル総数が両ファイルとも「2」か
-        if (f1.paramInfo.total !== "2" || f2.paramInfo.total !== "2") {
-          alert("エラー：4行目のファイル総数が両ファイルとも「2」ではありません。");
-          return;
-        }
-
-        // 3. 3行目が「1」と「2」で揃っているか
-        const kubuns = [f1.paramInfo.kubun, f2.paramInfo.kubun].sort();
-        if (kubuns[0] !== "1" || kubuns[1] !== "2") {
-          alert("エラー：3行目の区分が「1」と「2」で揃っていません。");
-          return;
-        }
-
-        // 区分「1」をファイル1、区分「2」をファイル2として順序を整える
-        if (f1.paramInfo.kubun === "2" && f2.paramInfo.kubun === "1") {
-          const temp = f1;
-          f1 = f2;
-          f2 = temp;
-        }
-
-        setWb1(f1.wb);
-        setHeaders(f1.headers);
-        setFields(f1.fields);
-        setRecords(f1.records);
-        setNumericFields(f1.numCols);
-        setDateFields(f1.dateCols);
-        setYearMonthFields(f1.ymCols);
-        setSelectOptions(f1.optionsMap);
-        setDisplayRules(f1.rules);
-        setParamInfo1(f1.paramInfo);
-
-        setWb2(f2.wb);
-        setHeaders2(f2.headers);
-        setFields2(f2.fields);
-        setRecords2(f2.records);
-        setNumericFields2(f2.numCols);
-        setDateFields2(f2.dateCols);
-        setYearMonthFields2(f2.ymCols);
-        setSelectOptions2(f2.optionsMap);
-        setDisplayRules2(f2.rules);
-        setParamInfo2(f2.paramInfo);
-
-        setIsTwoFiles(true);
-        // 📌 ② 2つのエクセルファイルを読み込んだ時、ファイル名は2段で表示するため改行コードを含める
-        setFileName(`${f1.fileName}\n${f2.fileName}`);
-        alert("ファイルの読み込み成功しました");
+        showToast("エクセルファイルの読み込みに成功しました。点検入力を開始してください");
       }
     } catch (err) {
-      console.error("エクセル読み込みエラー:", err);
+      console.error("1つ目のエクセル読み込みエラー:", err);
       alert("エクセルファイルの読み込みに失敗しました。");
+      e.target.value = "";
+    }
+  };
+
+  // ファイル選択ボタン2の変更ハンドラー
+  const handleFile2Select = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    // 1つ目のファイルチェック
+    if (!file1Obj) {
+      alert("1つ目のエクセルファイルが未選択です");
+      e.target.value = "";
+      return;
+    }
+
+    if (!window.XLSX) {
+      alert("SheetJSライブラリが読み込まれていません。");
+      return;
+    }
+
+    try {
+      const res2 = await parseSingleFile(file);
+
+      // エラーチェック: シート「パラメータ設定」が存在すること
+      if (!res2.wb.Sheets["パラメータ設定"]) {
+        alert("読み込んだエクセルファイルがオフライン専用入力アプリに対応したものではありません");
+        e.target.value = "";
+        return;
+      }
+
+      // エラーチェック: 「パラメータ設定」シート A6セルとプルダウンの選択肢番号の一致
+      if (res2.paramInfo.a6 !== selectedTask) {
+        alert("読み込んだエクセルファイルがプルダウンメニューから選択した点検業務のものではありません");
+        e.target.value = "";
+        return;
+      }
+
+      // エラーチェック: 「パラメータ設定」シート A3セルの値が「2」であること
+      if (res2.paramInfo.a3 !== "2") {
+        alert("読み込んだエクセルファイルが点検詳細02のものではありません");
+        e.target.value = "";
+        return;
+      }
+
+      // エラーチェック: インポート用シート A3セルに値があること
+      const importSheet2 = res2.wb.Sheets[res2.wb.SheetNames[0]];
+      const importRows2 = XLSX.utils.sheet_to_json(importSheet2, { header: 1 });
+      if (!importRows2 || !importRows2[2] || importRows2[2][0] === undefined || importRows2[2][0] === null || String(importRows2[2][0]).trim() === "") {
+        alert("読み込んだエクセルファイルが空レコードです");
+        e.target.value = "";
+        return;
+      }
+
+      setFile2Obj(res2);
+      setFile2NameText(file.name);
+
+      // ③ 主キー昇順ソート処理
+      let recs1 = [...file1Obj.records];
+      let recs2 = [...res2.records];
+
+      const keyCol1 = file1Obj.headers[0];
+      const keyCol2 = res2.headers[0];
+
+      recs1.sort((a, b) => Number(a[keyCol1]) - Number(b[keyCol1]));
+      recs2.sort((a, b) => Number(a[keyCol2]) - Number(b[keyCol2]));
+
+      // ④ 欠落キーの補填・空レコード挿入＆FID比較コピー＆初期値適用処理
+      let updatedRecs2 = [...recs2];
+
+      recs1.forEach((r1) => {
+        const val1 = r1[keyCol1];
+        if (val1 !== undefined && val1 !== null && val1 !== "") {
+          const match = updatedRecs2.find((r2) => String(r2[keyCol2]) === String(val1));
+          if (!match) {
+            // 空レコード作成
+            let emptyRec = { _isCompleted: false };
+            res2.headers.forEach((h) => {
+              emptyRec[h] = "";
+            });
+
+            // 1. 主キー設定
+            emptyRec[keyCol2] = val1;
+
+            // 2. 両ファイルで同じFIDを持つ項目へ値をコピー
+            file1Obj.fields.forEach((f1, idx1) => {
+              if (f1) {
+                const targetIdx2 = res2.fields.findIndex((f2) => String(f2).trim() === String(f1).trim());
+                if (targetIdx2 !== -1) {
+                  const h1 = file1Obj.headers[idx1];
+                  const h2 = res2.headers[targetIdx2];
+                  emptyRec[h2] = r1[h1] !== undefined ? r1[h1] : "";
+                }
+              }
+            });
+
+            // 3. 「初期値設定」シートのFID参照による初期値設定
+            res2.fields.forEach((f2, idx2) => {
+              const strF2 = String(f2).trim();
+              if (strF2 && res2.initValuesMap[strF2] !== undefined) {
+                const h2 = res2.headers[idx2];
+                if (emptyRec[h2] === "" || emptyRec[h2] === undefined) {
+                  emptyRec[h2] = res2.initValuesMap[strF2];
+                }
+              }
+            });
+
+            updatedRecs2.push(emptyRec);
+          }
+        }
+      });
+
+      // 再度ソート
+      updatedRecs2.sort((a, b) => Number(a[keyCol2]) - Number(b[keyCol2]));
+
+      setWb1(file1Obj.wb);
+      setHeaders(file1Obj.headers);
+      setFields(file1Obj.fields);
+      setRecords(recs1);
+      setNumericFields(file1Obj.numCols);
+      setDateFields(file1Obj.dateCols);
+      setYearMonthFields(file1Obj.ymCols);
+      setSelectOptions(file1Obj.optionsMap);
+      setDisplayRules(file1Obj.rules);
+      setParamInfo1(file1Obj.paramInfo);
+
+      setWb2(res2.wb);
+      setHeaders2(res2.headers);
+      setFields2(res2.fields);
+      setRecords2(updatedRecs2);
+      setNumericFields2(res2.numCols);
+      setDateFields2(res2.dateCols);
+      setYearMonthFields2(res2.ymCols);
+      setSelectOptions2(res2.optionsMap);
+      setDisplayRules2(res2.rules);
+      setParamInfo2(res2.paramInfo);
+
+      setIsTwoFiles(true);
+      setFileName(`${file1Obj.fileName}\n${res2.fileName}`);
+      showToast("エクセルファイルの読み込みに成功しました。点検入力を開始してください");
+
+    } catch (err) {
+      console.error("2つ目のエクセル読み込みエラー:", err);
+      alert("エクセルファイルの読み込みに失敗しました。");
+      e.target.value = "";
     }
   };
 
@@ -783,6 +961,10 @@ function App() {
     return (
       React.createElement("div", { className: "list-screen" },
         renderSideMenu(),
+        
+        // トースト通知表示
+        toastMessage && React.createElement("div", { className: "toast-notification" }, toastMessage),
+
         React.createElement("div", { className: "header" }, 
           React.createElement("button", {
             className: "hamburger-btn",
@@ -792,19 +974,57 @@ function App() {
         ),
         React.createElement("div", { className: "container" },
           
-          React.createElement("div", { className: "file-wrapper-box" },
-            !fileName && React.createElement("input", {
-              type: "file",
-              multiple: true,
-              onChange: handleUpload
-            }),
-            
-            fileName && React.createElement("div", { className: "fake-file-input" },
-              React.createElement("label", { className: "fake-file-button" }, 
-                "ファイルを選択",
-                React.createElement("input", { type: "file", multiple: true, onChange: handleUpload, style: { display: "none" } })
-              ),
-              React.createElement("span", { className: "fake-file-text" }, fileName)
+          /* ①①画面上に「1.点検業務をリストから選択」と説明文をラベル表示 */
+          React.createElement("div", { className: "section-label" }, "1.点検業務をリストから選択"),
+          
+          /* ②プルダウンメニューを設置 */
+          React.createElement("select", {
+            className: "select-box task-select",
+            value: selectedTask,
+            onChange: handleTaskChange
+          },
+            React.createElement("option", { value: "" }, "点検業務を選択"),
+            taskOptions.map((opt) => 
+              React.createElement("option", { key: opt.value, value: opt.value }, opt.label)
+            )
+          ),
+
+          /* ③プルダウンメニューから点検業務が選択されたら */
+          selectedTask && React.createElement("div", { className: "file-selection-area" },
+            React.createElement("div", { className: "section-label" }, "2.読み込むエクセルファイルを選択"),
+
+            /* 1つ目のファイル選択ボタン */
+            React.createElement("div", { className: "file-wrapper-box" },
+              React.createElement("div", { className: "fake-file-input" },
+                React.createElement("label", { className: "fake-file-button" },
+                  "ファイル選択",
+                  React.createElement("input", {
+                    ref: fileInputRef1,
+                    type: "file",
+                    accept: ".xlsx, .xls",
+                    onChange: handleFile1Select,
+                    style: { display: "none" }
+                  })
+                ),
+                React.createElement("span", { className: "fake-file-text" }, file1NameText)
+              )
+            ),
+
+            /* 2つ目のファイル選択ボタン（02, 05, 20選択時のみ表示） */
+            isTwoButtonsTask && React.createElement("div", { className: "file-wrapper-box" },
+              React.createElement("div", { className: "fake-file-input" },
+                React.createElement("label", { className: "fake-file-button" },
+                  "ファイル選択",
+                  React.createElement("input", {
+                    ref: fileInputRef2,
+                    type: "file",
+                    accept: ".xlsx, .xls",
+                    onChange: handleFile2Select,
+                    style: { display: "none" }
+                  })
+                ),
+                React.createElement("span", { className: "fake-file-text" }, file2NameText)
+              )
             )
           ),
 
@@ -825,11 +1045,6 @@ function App() {
   const currentRecord2 = isTwoFiles ? records2[selectedIndex] : null;
 
   const isFile2Active = activeTab === "file2";
-  const activeRecord = isFile2Active ? currentRecord2 : currentRecord1;
-  const activeHeaders = isFile2Active ? headers2 : headers;
-  const activeFields = isFile2Active ? fields2 : fields;
-  const activeSelectOptions = isFile2Active ? selectOptions2 : selectOptions;
-  const activeErrorIndices = isFile2Active ? errorIndices2 : errorIndices;
 
   // 📌 入力コンポーネント生成ヘルパー
   const renderFieldsList = (targetHeaders, targetFields, targetRecord, targetSelectOptions, targetErrorIndices, isFile2) => {
