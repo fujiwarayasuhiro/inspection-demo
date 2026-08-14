@@ -1006,7 +1006,9 @@ function App() {
                     style: { display: "none" }
                   })
                 ),
-                React.createElement("span", { className: "fake-file-text" }, file1NameText)
+                React.createElement("span", {
+                  className: `fake-file-text ${!file1Obj ? "is-empty-text" : ""}`
+                }, file1NameText)
               )
             ),
 
@@ -1023,7 +1025,9 @@ function App() {
                     style: { display: "none" }
                   })
                 ),
-                React.createElement("span", { className: "fake-file-text" }, file2NameText)
+                React.createElement("span", {
+                  className: `fake-file-text ${!file2Obj ? "is-empty-text" : ""}`
+                }, file2NameText)
               )
             )
           ),
