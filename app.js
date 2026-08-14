@@ -564,7 +564,7 @@ function App() {
   const handleExitApp = () => {
     setIsMenuOpen(false);
     const confirmed = window.confirm(
-      "点検入力アプリを終了しますか？\n(補足：現在点検入力中の内容は破棄されます)"
+      "点検入力アプリを終了しますか？\n(現在点検入力中の内容は破棄されます)"
     );
     if (confirmed) {
       window.location.reload(); // アプリをリセットして初期状態に戻す
@@ -691,7 +691,7 @@ function App() {
     if (!isMenuOpen) return null;
     return React.createElement("div", { className: "menu-overlay", onClick: () => setIsMenuOpen(false) },
       React.createElement("div", { className: "menu-content", onClick: (e) => e.stopPropagation() },
-        React.createElement("div", { className: "menu-header" }, "メニュー一覧"),
+        React.createElement("div", { className: "menu-header" }, "メニュー"),
         React.createElement("ul", { className: "menu-list" },
           React.createElement("li", {
             onClick: () => {
@@ -714,16 +714,18 @@ function App() {
     );
   };
 
-  // 📌 アプリバージョン情報画面
+  // 📌 アプリバージョン情報画面（固定ヘッダーの下に潜り込まない構造に修正）
   if (screen === "app-version") {
     return (
       React.createElement("div", { className: "info-screen" },
-        React.createElement("div", { className: "header" },
-          React.createElement("button", {
-            className: "header-back-btn",
-            onClick: () => setScreen("list")
-          }, "＜戻る"),
-          "アプリバージョン情報"
+        React.createElement("div", { className: "sticky-header" },
+          React.createElement("div", { className: "header" },
+            React.createElement("button", {
+              className: "header-back-btn",
+              onClick: () => setScreen("list")
+            }, "＜戻る"),
+            "アプリバージョン情報"
+          )
         ),
         React.createElement("div", { className: "container info-container" },
           React.createElement("div", { className: "info-card" },
@@ -734,16 +736,18 @@ function App() {
     );
   }
 
-  // 📌 ライセンス情報画面
+  // 📌 ライセンス情報画面（固定ヘッダーの下に潜り込まない構造に修正）
   if (screen === "license") {
     return (
       React.createElement("div", { className: "info-screen" },
-        React.createElement("div", { className: "header" },
-          React.createElement("button", {
-            className: "header-back-btn",
-            onClick: () => setScreen("list")
-          }, "＜戻る"),
-          "ライセンス情報"
+        React.createElement("div", { className: "sticky-header" },
+          React.createElement("div", { className: "header" },
+            React.createElement("button", {
+              className: "header-back-btn",
+              onClick: () => setScreen("list")
+            }, "＜戻る"),
+            "ライセンス情報"
+          )
         ),
         React.createElement("div", { className: "container info-container" },
           React.createElement("div", { className: "info-card" },
