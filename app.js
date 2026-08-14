@@ -742,14 +742,12 @@ function App() {
   if (screen === "app-version") {
     return (
       React.createElement("div", { className: "info-screen" },
-        React.createElement("div", { className: "sticky-header" },
-          React.createElement("div", { className: "header" },
-            React.createElement("button", {
-              className: "header-back-btn",
-              onClick: () => setScreen("list")
-            }, "＜戻る"),
-            "アプリバージョン情報"
-          )
+        React.createElement("div", { className: "header" },
+          React.createElement("button", {
+            className: "header-back-btn",
+            onClick: () => setScreen("list")
+          }, "＜戻る"),
+          "アプリバージョン情報"
         ),
         React.createElement("div", { className: "container info-container" },
           React.createElement("div", { className: "info-card" },
@@ -764,14 +762,12 @@ function App() {
   if (screen === "license") {
     return (
       React.createElement("div", { className: "info-screen" },
-        React.createElement("div", { className: "sticky-header" },
-          React.createElement("div", { className: "header" },
-            React.createElement("button", {
-              className: "header-back-btn",
-              onClick: () => setScreen("list")
-            }, "＜戻る"),
-            "ライセンス情報"
-          )
+        React.createElement("div", { className: "header" },
+          React.createElement("button", {
+            className: "header-back-btn",
+            onClick: () => setScreen("list")
+          }, "＜戻る"),
+          "ライセンス情報"
         ),
         React.createElement("div", { className: "container info-container" },
           React.createElement("div", { className: "info-card" },
