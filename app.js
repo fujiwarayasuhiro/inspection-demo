@@ -1592,7 +1592,7 @@ function App() {
 
       /* 📌 ④ 点検詳細01と02のスクロールを独立させた表示領域 */
       React.createElement("div", { className: "detail-content-scroll" },
-        // タブ1 (点検詳細01)
+        // タブ1 (🗂️点検詳細01)
         React.createElement("div", {
           ref: tab1ScrollRef,
           className: "tab-scroll-container theme-tab1",
@@ -1603,7 +1603,7 @@ function App() {
           )
         ),
 
-        // タブ2 (点検詳細02)
+        // タブ2 (🗂️点検詳細02)
         isTwoFiles && currentRecord2 && React.createElement("div", {
           ref: tab2ScrollRef,
           className: "tab-scroll-container theme-tab2",
