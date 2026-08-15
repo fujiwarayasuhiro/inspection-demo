@@ -718,7 +718,7 @@ function App() {
     const timestamp = getFormattedTimestamp();
     const tenkenName = targetParamInfo.name || "点検結果";
     const kubun = targetParamInfo.kubun || "1";
-    const outFileName = `【点検結果】${tenkenName}${kubun}_${timestamp}.xlsx`;
+    const outFileName = `【点検結果】${tenkenName}_${kubun}_${timestamp}.xlsx`;
 
     return { wb: exportWb, fileName: outFileName };
   };
