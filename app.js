@@ -55,6 +55,9 @@ function App() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isAccordionOpen, setIsAccordionOpen] = useState(true);
 
+  // 📌 【追加】詳細画面の上部固定カードのアコーディオン開閉状態State
+  const [isDetailCardOpen, setIsDetailCardOpen] = useState(true);
+
   const fileInputRef1 = useRef(null);
   const fileInputRef2 = useRef(null);
 
@@ -770,6 +773,7 @@ function App() {
           setErrorIndices([]); // 📌 詳細画面を開くときはエラー状態をリセット
           setErrorIndices2([]);
           setActiveTab("file1"); // 詳細画面を開いたときはタブ1をデフォルト表示
+          setIsDetailCardOpen(true); // 詳細画面を開く際はカードを展開状態にリセット
           setScreen("detail");
         }
       },
@@ -1288,7 +1292,7 @@ function App() {
             React.createElement("button", {
               className: "button-back",
               onClick: handleBack // 📌 チェックロジック
-            }, "← 戻る")
+            }, "＜戻る")
           ),
           React.createElement("div", { className: "action-center" },
             `${selectedIndex + 1} ／ ${records.length}`
@@ -1305,12 +1309,20 @@ function App() {
           )
         ),
         
+        /* 📌 アコーディオン化された固定表示カードエリア */
         React.createElement("div", { className: "floating-card-container" },
           React.createElement("div", { 
             className: `floating-card ${currentRecord1._isCompleted ? "is-completed" : ""}` 
           },
-            // 📌 パラメータ設定のA7セル（cardColumns）から表示する列数を動的に決定（デフォルトは4）
-            headers.slice(0, parseInt(paramInfo1.cardColumns, 10) || 4).map((h, idx) =>
+            // アコーディオンの開閉トグルボタン
+            React.createElement("button", {
+              className: "floating-card-toggle",
+              onClick: () => setIsDetailCardOpen(!isDetailCardOpen),
+              "aria-label": "カードの開閉"
+            }, isDetailCardOpen ? "∧" : "∨"),
+            
+            // カードの内容（開いている時のみ表示）
+            isDetailCardOpen && headers.slice(0, parseInt(paramInfo1.cardColumns, 10) || 4).map((h, idx) =>
               React.createElement("div", { key: idx },
                 String(currentRecord1[h] || "")
               )
@@ -1318,16 +1330,18 @@ function App() {
           )
         ),
 
-        // 📌 ③ タブボタンのスタイル切り替え（点検詳細01/点検詳細02で色を分ける）
+        /* 📌 ③ タブボタンのスタイル切り替え（2ファイル選択時のみ表示） */
         isTwoFiles && React.createElement("div", { className: "tab-bar-container" },
-          React.createElement("button", {
-            className: `tab-button tab-01 ${activeTab === "file1" ? "active" : ""}`,
-            onClick: () => setActiveTab("file1")
-          }, "点検詳細01"),
-          React.createElement("button", {
-            className: `tab-button tab-02 ${activeTab === "file2" ? "active" : ""}`,
-            onClick: () => setActiveTab("file2")
-          }, "点検詳細02")
+          React.createElement("div", { className: "segmented-control" },
+            React.createElement("button", {
+              className: `tab-button tab-01 ${activeTab === "file1" ? "active" : "inactive"}`,
+              onClick: () => setActiveTab("file1")
+            }, "点検詳細01"),
+            React.createElement("button", {
+              className: `tab-button tab-02 ${activeTab === "file2" ? "active" : "inactive"}`,
+              onClick: () => setActiveTab("file2")
+            }, "点検詳細02")
+          )
         )
       ),
 
