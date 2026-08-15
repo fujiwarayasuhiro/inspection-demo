@@ -25,6 +25,35 @@ body {
   gap: 8px;
 }
 
+/* 📌 詳細画面ヘッダー用のスタイル（「✚追加」ボタン配置用） */
+.header-detail {
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+
+.header-title {
+  flex: 1;
+  text-align: center;
+}
+
+/* 📌 ヘッダー右端の「✚追加」ボタン */
+.header-add-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid #ffffff;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.header-add-btn:active {
+  background: rgba(255, 255, 255, 0.4);
+}
+
 /* 📌 バージョン情報のスタイル */
 .header-ver {
   font-size: 12px;
@@ -662,7 +691,7 @@ select:disabled {
   line-height: 1;
 }
 
-/* 未入力エラー時のカード枠線（うっすら赤くする） */
+/* 未入力エラー・重複エラー時のカード枠線（うっすら赤くする） */
 .card.card-error {
   border: 1px solid #ffcdd2 !important;
   border-left: 4px solid #d32f2f !important;
@@ -671,20 +700,20 @@ select:disabled {
   box-shadow: 0 4px 12px rgba(211, 47, 47, 0.05);
 }
 
-/* 未入力エラー時の入力フォーム枠線 */
+/* 未入力エラー・重複エラー時の入力フォーム枠線 */
 input.input-error,
 select.input-error {
   border-color: #d32f2f !important;
   background-color: #fff8f8;
 }
 
-/* 未入力エラー時用のフォーカス */
+/* 未入力エラー・重複エラー時用のフォーカス */
 input.input-error:focus,
 select.input-error:focus {
   box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.15) !important;
 }
 
-/* 項目下部に表示される「未入力です」のテキスト */
+/* 項目下部に表示されるエラーのテキスト */
 .error-message-text {
   color: #d32f2f;
   font-size: 13px;
