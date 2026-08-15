@@ -44,9 +44,8 @@ body {
   box-sizing: border-box;
 }
 
-/* 📌 詳細画面の上部固定エリア（タブ表示対応のため余白を調整） */
+/* 📌 詳細画面の上部固定エリア（Flexboxにより高さを自動計算） */
 .detail-screen {
-  padding-top: 270px;
   height: 100vh;
   box-sizing: border-box;
   display: flex;
@@ -64,6 +63,7 @@ body {
   height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  padding-bottom: 30px;
 }
 
 /* 📌 タブテーマごとの入力エリア背景色連動 */
@@ -76,14 +76,12 @@ body {
 }
 
 .sticky-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   z-index: 100;
   background: #f4f6f9;
   padding-top: 55px; /* ヘッダーの高さ分下げる */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* 境界をわかりやすく */
+  flex-shrink: 0;
 }
 
 /* 📌 アクションバーの配置 */
@@ -117,47 +115,57 @@ body {
   justify-content: flex-end;
 }
 
-/* 📌 点検詳細タブ切り替えスタイルの追加 */
+/* 📌 点検詳細タブ切り替えスタイルの改修（修正イメージ対応） */
 .tab-bar-container {
   max-width: 420px;
   margin: auto;
   padding: 0 16px 8px 16px;
-  display: flex;
-  gap: 8px;
   box-sizing: border-box;
+}
+
+/* セグメントコントロールスタイルのコンテナ */
+.segmented-control {
+  display: flex;
+  background-color: #e0e0e0;
+  padding: 3px;
+  border-radius: 12px;
+  gap: 2px;
 }
 
 .tab-button {
   flex: 1;
-  padding: 10px;
+  padding: 8px 12px;
   font-size: 14px;
   font-weight: bold;
-  color: #0078d4;
-  background: #e1f0fc;
-  border: 1px solid #0078d4;
-  border-radius: 8px;
+  border: none;
+  border-radius: 9px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease-in-out;
   text-align: center;
 }
 
-.tab-button.active {
+/* 選択されているタブ */
+.tab-button.tab-01.active {
   background: #0078d4;
   color: white;
-  box-shadow: 0 2px 4px rgba(0, 120, 212, 0.2);
-}
-
-/* 📌 ③ タブ2（点検詳細02）用のカラー（アクセントの効いたティール/青緑系） */
-.tab-button.tab-02 {
-  color: #00838f;
-  background: #e0f2f1;
-  border-color: #00838f;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .tab-button.tab-02.active {
   background: #00838f;
   color: white;
-  box-shadow: 0 2px 4px rgba(0, 131, 143, 0.2);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* グレーアウト（非選択状態のタブ） */
+.tab-button.inactive {
+  background: transparent;
+  color: #777777;
+  box-shadow: none;
+}
+
+.tab-button.inactive:hover {
+  color: #333333;
 }
 
 /* 📌 点検完了チェックボックスのスタイル */
@@ -178,27 +186,27 @@ body {
   margin: 0;
 }
 
-/* 🔙 戻るボタンのデザイン */
+/* 🔙 戻るボタンのデザイン（イメージ画像に合わせて枠付き・透明感のあるデザインに） */
 .button-back {
   display: inline-block;
-  padding: 8px 16px;
+  padding: 6px 14px;
   font-size: 14px;
   font-weight: bold;
   color: #0078d4;
-  background: #e1f0fc;
-  border: 1px solid transparent; 
+  background: #ffffff;
+  border: 1.5px solid #0078d4; 
   border-radius: 6px;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 120, 212, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   transition: all 0.2s;
 }
 
 .button-back:active {
-  background: #d0e7f9;
+  background: #e1f0fc;
   transform: translateY(1px);
 }
 
-/* 📌 フローティングバナー（固定表示カード）のスタイル */
+/* 📌 フローティングバナー（固定表示カード）のアコーディオン対応スタイル */
 .floating-card-container {
   max-width: 420px;
   margin: auto;
@@ -207,14 +215,35 @@ body {
 }
 
 .floating-card {
+  position: relative;
   background: #edf1f5; /* 固定用として少し色をグレーに変更 */
   border: 1px solid #ccd4dc; /* 枠線を少し強調 */
   border-radius: 12px;
-  padding: 12px;
+  padding: 10px 36px 10px 12px;
   font-size: 14px;
   color: #444;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
   line-height: 1.4;
+  min-height: 18px;
+}
+
+/* カード右上の開閉用トグルボタン */
+.floating-card-toggle {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  color: #666;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.floating-card-toggle:hover {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 /* 点検完了時のフローティングバナー枠色 */
@@ -950,7 +979,7 @@ select.input-error:focus {
   font-size: 14px;
   color: #555555;
   padding-bottom: 6px;
-  border-bottom: 1.5 solid #0078d4;
+  border-bottom: 1.5px solid #0078d4;
   word-break: break-all;
 }
 
@@ -958,9 +987,6 @@ select.input-error:focus {
 @media (max-width: 480px) {
   .list-screen {
     padding-top: 60px;
-  }
-  .detail-screen {
-    padding-top: 250px;
   }
   .action-bar {
     padding: 6px 12px;
