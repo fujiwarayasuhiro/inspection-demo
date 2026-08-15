@@ -681,18 +681,15 @@ function App() {
         // 📌 両タブに同じFIDがある場合に連動して変更する処理
         const fieldIdx1 = headers.indexOf(key);
         if (fieldIdx1 !== -1) {
-          const fid1 = fields.indexOf(key); // ヘッダーインデックス取得
-          if (fieldIdx1 !== -1) {
-            const fid1Val = fields[fieldIdx1];
-            if (fid1Val) {
-              const strFid1 = String(fid1Val).trim();
-              const targetIdx2 = fields2.findIndex(f => f && String(f).trim() === strFid1);
-              if (targetIdx2 !== -1) {
-                const targetHeader2 = headers2[targetIdx2];
-                const newData2 = [...records2];
-                newData2[selectedIndex][targetHeader2] = value;
-                setRecords2(newData2);
-              }
+          const fid1Val = fields[fieldIdx1];
+          if (fid1Val) {
+            const strFid1 = String(fid1Val).trim();
+            const targetIdx2 = fields2.findIndex(f => f && String(f).trim() === strFid1);
+            if (targetIdx2 !== -1) {
+              const targetHeader2 = headers2[targetIdx2];
+              const newData2 = [...records2];
+              newData2[selectedIndex][targetHeader2] = value;
+              setRecords2(newData2);
             }
           }
         }
@@ -1152,7 +1149,7 @@ function App() {
     );
   };
 
-  // 📌 アプリバージョン情報画面（固定ヘッダーの下に潜り込まない構造に修正）
+  // 📌 アプリバージョン情報画面（ヘッダーと文字の被り防止・上揃え配置へ修正）
   if (screen === "app-version") {
     return (
       React.createElement("div", { className: "info-screen" },
@@ -1161,7 +1158,7 @@ function App() {
             className: "header-back-btn",
             onClick: () => setScreen("list")
           }, "＜戻る"),
-          "アプリバージョン情報"
+          React.createElement("span", { className: "header-title" }, "アプリバージョン情報")
         ),
         React.createElement("div", { className: "container info-container" },
           React.createElement("div", { className: "info-card" },
@@ -1172,7 +1169,7 @@ function App() {
     );
   }
 
-  // 📌 ライセンス情報画面（固定ヘッダーの下に潜り込まない構造に修正）
+  // 📌 ライセンス情報画面（ヘッダーと文字の被り防止・上揃え配置へ修正）
   if (screen === "license") {
     return (
       React.createElement("div", { className: "info-screen" },
@@ -1181,7 +1178,7 @@ function App() {
             className: "header-back-btn",
             onClick: () => setScreen("list")
           }, "＜戻る"),
-          "ライセンス情報"
+          React.createElement("span", { className: "header-title" }, "ライセンス情報")
         ),
         React.createElement("div", { className: "container info-container" },
           React.createElement("div", { className: "info-card" },
@@ -1519,12 +1516,8 @@ function App() {
             className: "hamburger-btn",
             onClick: () => setIsMenuOpen(true)
           }, "Ξ"),
-          React.createElement("span", { className: "header-title" }, "点検詳細入力"),
-          /* 📌 【修正内容②】詳細画面の青色ヘッダー右端にも「✚追加」ボタンを配置 */
-          isLoaded && React.createElement("button", {
-            className: "header-add-btn",
-            onClick: handleAddRecord
-          }, "✚追加")
+          React.createElement("span", { className: "header-title" }, "点検詳細入力")
+          /* 📌 【修正内容②】不要になったヘッダー右端の「✚追加」ボタンを削除 */
         ),
         React.createElement("div", { className: "action-bar" },
           React.createElement("div", { className: "action-left" },
@@ -1590,24 +1583,24 @@ function App() {
         )
       ),
 
-      /* 📌 ④ 点検詳細01と02のスクロールを独立させた表示領域 */
+      /* 📌 ④ 点検詳細01/02入力エリア（独立スクロール制御） */
       React.createElement("div", { className: "detail-content-scroll" },
-        // タブ1 (点検詳細01)
+        /* 点検詳細01用スクロールエリア */
         React.createElement("div", {
           ref: tab1ScrollRef,
           className: "tab-scroll-container theme-tab1",
-          style: { display: activeTab === "file1" ? "block" : "none" }
+          style: { display: isFile2Active ? "none" : "block" }
         },
           React.createElement("div", { className: "container" },
             renderFieldsList(headers, fields, currentRecord1, selectOptions, errorIndices, duplicateErrorIndices, false)
           )
         ),
 
-        // タブ2 (点検詳細02)
-        isTwoFiles && currentRecord2 && React.createElement("div", {
+        /* 点検詳細02用スクロールエリア */
+        isTwoFiles && React.createElement("div", {
           ref: tab2ScrollRef,
           className: "tab-scroll-container theme-tab2",
-          style: { display: activeTab === "file2" ? "block" : "none" }
+          style: { display: isFile2Active ? "block" : "none" }
         },
           React.createElement("div", { className: "container" },
             renderFieldsList(headers2, fields2, currentRecord2, selectOptions2, errorIndices2, duplicateErrorIndices2, true)
