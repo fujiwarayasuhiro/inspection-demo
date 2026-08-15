@@ -39,6 +39,14 @@ function App() {
   // 📌 ⑤ 点検詳細02（ファイル2）用のエラー項目Stateを追加
   const [errorIndices2, setErrorIndices2] = useState([]);
 
+  // 📌 【追加】重複エラーが発生した項目（インデックス番号）を保持するState
+  const [duplicateErrorIndices, setDuplicateErrorIndices] = useState([]);
+  const [duplicateErrorIndices2, setDuplicateErrorIndices2] = useState([]);
+
+  // 📌 【追加】「初期値設定」シートのFIDマッピングを保持するState
+  const [initValuesMap1, setInitValuesMap1] = useState({});
+  const [initValuesMap2, setInitValuesMap2] = useState({});
+
   // 📌 「入力条件設定」シートのルールを保持するStateを追加
   const [displayRules, setDisplayRules] = useState([]);
   const [displayRules2, setDisplayRules2] = useState([]);
@@ -406,6 +414,7 @@ function App() {
         setSelectOptions(res.optionsMap);
         setDisplayRules(res.rules);
         setParamInfo1(res.paramInfo);
+        setInitValuesMap1(res.initValuesMap || {});
 
         setIsTwoFiles(false);
         setFileName(res.fileName);
@@ -540,6 +549,7 @@ function App() {
       setSelectOptions(file1Obj.optionsMap);
       setDisplayRules(file1Obj.rules);
       setParamInfo1(file1Obj.paramInfo);
+      setInitValuesMap1(file1Obj.initValuesMap || {});
 
       setWb2(res2.wb);
       setHeaders2(res2.headers);
@@ -551,6 +561,7 @@ function App() {
       setSelectOptions2(res2.optionsMap);
       setDisplayRules2(res2.rules);
       setParamInfo2(res2.paramInfo);
+      setInitValuesMap2(res2.initValuesMap || {});
 
       setIsTwoFiles(true);
       setFileName(`${file1Obj.fileName}\n${res2.fileName}`);
@@ -619,7 +630,60 @@ function App() {
     }
   };
 
-  // 📌 戻るボタン押下時の必須チェックバリデーションおよび①非表示項目のクリア処理
+  // 📌 【修正内容③】「✚追加」ボタン押下時の処理関数
+  const handleAddRecord = () => {
+    // レコード追加の生成ヘルパー
+    const createNewRecord = (targetHeaders, targetFields, targetRecordsList, targetInitValuesMap) => {
+      // 1. 3行目のレコード内容をテンプレート（ディープコピー）として作成
+      let templateRec = {};
+      if (targetRecordsList && targetRecordsList.length > 0) {
+        templateRec = JSON.parse(JSON.stringify(targetRecordsList[0]));
+      } else {
+        targetHeaders.forEach(h => { templateRec[h] = ""; });
+      }
+
+      let newRec = { ...templateRec, _isCompleted: false };
+
+      targetHeaders.forEach((h, idx) => {
+        // 左端最初の項目(A列)の値を空にする
+        if (idx === 0) {
+          newRec[h] = "";
+          return;
+        }
+
+        const isDisable = h && h.includes("▲");
+        // 入力不可項目(▲が含まれる項目)以外の項目の値は空値にする
+        if (!isDisable) {
+          newRec[h] = "";
+        }
+
+        // 「初期値設定」シートにあるFIDを参照し、初期値を入れる
+        const fid = targetFields[idx];
+        if (fid) {
+          const strFid = String(fid).trim();
+          if (targetInitValuesMap && targetInitValuesMap[strFid] !== undefined && targetInitValuesMap[strFid] !== null) {
+            newRec[h] = targetInitValuesMap[strFid];
+          }
+        }
+      });
+
+      return newRec;
+    };
+
+    const newRec1 = createNewRecord(headers, fields, records, initValuesMap1);
+    const newRecords1 = [...records, newRec1];
+    setRecords(newRecords1);
+
+    if (isTwoFiles && headers2.length > 0) {
+      const newRec2 = createNewRecord(headers2, fields2, records2, initValuesMap2);
+      const newRecords2 = [...records2, newRec2];
+      setRecords2(newRecords2);
+    }
+
+    showToast("新規レコードを追加しました");
+  };
+
+  // 📌 戻るボタン押下時の必須チェックバリデーションおよび①非表示項目のクリア処理・重複入力エラーチェック
   const handleBack = () => {
     const currentRec1 = records[selectedIndex];
     const errors1 = [];
@@ -684,7 +748,68 @@ function App() {
       return; // 画面遷移をストップ
     }
 
-    // 📌 【修正内容①】非表示項目の値を空値（未入力・未選択）にクリアする処理
+    // 📌 【修正内容①】重複入力不可項目(◎)の重複チェック処理
+    const duplicateIndices1 = [];
+    const duplicateIndices2 = [];
+
+    // ◎項目インデックスの抽出ヘルパー
+    const getNoDuplicateHeaders = (targetHeaders) => {
+      const list = [];
+      targetHeaders.forEach((h, idx) => {
+        if (h && h.includes("◎")) {
+          list.push({ header: h, index: idx });
+        }
+      });
+      return list;
+    };
+
+    const dupHeaders1 = getNoDuplicateHeaders(headers);
+    if (dupHeaders1.length > 0 && records.length > 1) {
+      dupHeaders1.forEach(({ header, index }) => {
+        const currentValue = String(currentRec1[header] || "").trim();
+        if (currentValue !== "") {
+          const isDup = records.some((rec, idx) => {
+            if (idx === selectedIndex) return false;
+            return String(rec[header] || "").trim() === currentValue;
+          });
+          if (isDup) {
+            duplicateIndices1.push(index);
+          }
+        }
+      });
+    }
+
+    if (isTwoFiles && currentRec2 && records2.length > 1) {
+      const dupHeaders2 = getNoDuplicateHeaders(headers2);
+      dupHeaders2.forEach(({ header, index }) => {
+        const currentValue = String(currentRec2[header] || "").trim();
+        if (currentValue !== "") {
+          const isDup = records2.some((rec, idx) => {
+            if (idx === selectedIndex) return false;
+            return String(rec[header] || "").trim() === currentValue;
+          });
+          if (isDup) {
+            duplicateIndices2.push(index);
+          }
+        }
+      });
+    }
+
+    if (duplicateIndices1.length > 0 || duplicateIndices2.length > 0) {
+      setDuplicateErrorIndices(duplicateIndices1);
+      setDuplicateErrorIndices2(duplicateIndices2);
+
+      if (duplicateIndices1.length > 0) {
+        setActiveTab("file1");
+      } else if (duplicateIndices2.length > 0) {
+        setActiveTab("file2");
+      }
+
+      alert("他のレコードと入力内容が重複しています");
+      return; // 画面遷移をストップ
+    }
+
+    // 📌 非表示項目の値を空値（未入力・未選択）にクリアする処理
     const updatedRec1 = { ...currentRec1 };
     headers.forEach((h, i) => {
       const currentFid = fields[i];
@@ -713,6 +838,8 @@ function App() {
     // エラーがなければクリアして戻る
     setErrorIndices([]);
     setErrorIndices2([]);
+    setDuplicateErrorIndices([]);
+    setDuplicateErrorIndices2([]);
     setScreen("list");
   };
 
@@ -837,6 +964,8 @@ function App() {
           setSelectedIndex(i);
           setErrorIndices([]); // 📌 詳細画面を開くときはエラー状態をリセット
           setErrorIndices2([]);
+          setDuplicateErrorIndices([]);
+          setDuplicateErrorIndices2([]);
           setActiveTab("file1"); // 詳細画面を開いたときはタブ1をデフォルト表示
           setIsDetailCardOpen(true); // 詳細画面を開く際はカードを展開状態にリセット
           setScreen("detail");
@@ -1211,7 +1340,7 @@ function App() {
   const isFile2Active = activeTab === "file2";
 
   // 📌 入力コンポーネント生成ヘルパー
-  const renderFieldsList = (targetHeaders, targetFields, targetRecord, targetSelectOptions, targetErrorIndices, isFile2) => {
+  const renderFieldsList = (targetHeaders, targetFields, targetRecord, targetSelectOptions, targetErrorIndices, targetDupIndices, isFile2) => {
     const targetVisibleMap = getVisibleFieldsMap(targetRecord, isFile2);
 
     return targetHeaders.map((h, i) => {
@@ -1260,8 +1389,9 @@ function App() {
       const isDisabled = h && h.includes("▲");
       const isRequired = h && h.includes("※");
       
-      // 📌 エラー判定
+      // 📌 エラー判定（必須エラー & 重複エラー）
       const hasError = targetErrorIndices.includes(i) && (rawValue === undefined || rawValue === null || String(rawValue).trim() === "");
+      const hasDupError = targetDupIndices.includes(i);
 
       let inputElement;
 
@@ -1290,7 +1420,7 @@ function App() {
         );
       } else if (isSelect && hasOptions) {
         inputElement = React.createElement("select", {
-          className: `select-box ${hasError ? "input-error" : ""}`,
+          className: `select-box ${(hasError || hasDupError) ? "input-error" : ""}`,
           value: rawValue,
           disabled: isDisabled,
           onChange: (e) => updateValue(h, e.target.value, isFile2)
@@ -1304,7 +1434,7 @@ function App() {
         const inputField = React.createElement("input", {
           type: type,
           value: value,
-          className: hasError ? "input-error" : "",
+          className: (hasError || hasDupError) ? "input-error" : "",
           disabled: isDisabled,
           onChange: (e) => {
             if (type === "date" || type === "month") {
@@ -1330,14 +1460,15 @@ function App() {
 
       return React.createElement("div", {
         key: i,
-        className: `card ${isDisabled ? "is-disabled-card" : ""} ${hasError ? "card-error" : ""}`
+        className: `card ${isDisabled ? "is-disabled-card" : ""} ${(hasError || hasDupError) ? "card-error" : ""}`
       },
         React.createElement("div", { className: "card-title-row" },
           React.createElement("div", { className: "card-title" }, h),
           isRequired && React.createElement("span", { className: "required-badge" }, "必須")
         ),
         inputElement,
-        hasError && React.createElement("div", { className: "error-message-text" }, errorMessage)
+        hasError && React.createElement("div", { className: "error-message-text" }, errorMessage),
+        hasDupError && React.createElement("div", { className: "error-message-text" }, "重複入力です")
       );
     });
   };
@@ -1346,13 +1477,22 @@ function App() {
   return (
     React.createElement("div", { className: "detail-screen" },
       renderSideMenu(),
+      
+      // 📌 トースト通知表示
+      toastMessage && React.createElement("div", { className: "toast-notification" }, toastMessage),
+
       React.createElement("div", { className: "sticky-header" },
-        React.createElement("div", { className: "header" }, 
+        // 📌 ②【修正内容②】青色ヘッダー右端に「✚追加」ボタンを配置
+        React.createElement("div", { className: "header header-detail" }, 
           React.createElement("button", {
             className: "hamburger-btn",
             onClick: () => setIsMenuOpen(true)
           }, "Ξ"),
-          "点検詳細入力"
+          React.createElement("span", { className: "header-title" }, "点検詳細入力"),
+          React.createElement("button", {
+            className: "header-add-btn",
+            onClick: handleAddRecord
+          }, "✚追加")
         ),
         React.createElement("div", { className: "action-bar" },
           React.createElement("div", { className: "action-left" },
@@ -1427,7 +1567,7 @@ function App() {
           style: { display: activeTab === "file1" ? "block" : "none" }
         },
           React.createElement("div", { className: "container" },
-            renderFieldsList(headers, fields, currentRecord1, selectOptions, errorIndices, false)
+            renderFieldsList(headers, fields, currentRecord1, selectOptions, errorIndices, duplicateErrorIndices, false)
           )
         ),
 
@@ -1438,7 +1578,7 @@ function App() {
           style: { display: activeTab === "file2" ? "block" : "none" }
         },
           React.createElement("div", { className: "container" },
-            renderFieldsList(headers2, fields2, currentRecord2, selectOptions2, errorIndices2, true)
+            renderFieldsList(headers2, fields2, currentRecord2, selectOptions2, errorIndices2, duplicateErrorIndices2, true)
           )
         )
       )
