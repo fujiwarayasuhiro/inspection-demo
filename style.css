@@ -469,6 +469,41 @@ input[type="month"]:focus {
   background: #0066b3;
 }
 
+/* 📌 ボタンを2つ横並び（左右配置）にするためのスタイル追加 */
+.button-group {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.button-half {
+  flex: 1;
+  margin-top: 0;
+  margin-bottom: 0;
+  box-sizing: border-box;
+}
+
+/* 📌 署名アプリ起動ボタン（アンカータグ用）のスタイル調整 */
+a.button {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button-secondary {
+  background: #2b5797; /* 差別化のためのサードパーティ系ネイビー/ブルー */
+  color: white;
+  box-shadow: 0 4px 6px rgba(43, 87, 151, 0.2);
+}
+
+.button-secondary:active {
+  background: #1e3d6b;
+  box-shadow: 0 2px 4px rgba(43, 87, 151, 0.2);
+}
+
 /* 📁 ファイルアップロード（点線デザイン） */
 .file-wrapper-box {
   background: #fff;
