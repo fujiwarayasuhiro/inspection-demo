@@ -51,6 +51,10 @@ function App() {
   const [file2NameText, setFile2NameText] = useState("点検詳細02が選択されていません");
   const [toastMessage, setToastMessage] = useState("");
 
+  // 📌 【追加】読み込み完了フラグとアコーディオン開閉状態のState
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isAccordionOpen, setIsAccordionOpen] = useState(true);
+
   const fileInputRef1 = useRef(null);
   const fileInputRef2 = useRef(null);
 
@@ -333,6 +337,8 @@ function App() {
     setRecords([]);
     setRecords2([]);
     setFileName("");
+    setIsLoaded(false);
+    setIsAccordionOpen(true);
     if (fileInputRef1.current) fileInputRef1.current.value = "";
     if (fileInputRef2.current) fileInputRef2.current.value = "";
   };
@@ -400,6 +406,7 @@ function App() {
 
         setIsTwoFiles(false);
         setFileName(res.fileName);
+        setIsLoaded(true); // 📌 読み込み完了状態に変更
         showToast("エクセルファイルの読み込みに成功しました。点検入力を開始してください");
       }
     } catch (err) {
@@ -544,6 +551,7 @@ function App() {
 
       setIsTwoFiles(true);
       setFileName(`${file1Obj.fileName}\n${res2.fileName}`);
+      setIsLoaded(true); // 📌 読み込み完了状態に変更
       showToast("エクセルファイルの読み込みに成功しました。点検入力を開始してください");
 
     } catch (err) {
@@ -958,6 +966,8 @@ function App() {
 
   // 一覧画面
   if (screen === "list") {
+    const selectedTaskLabel = taskOptions.find(opt => opt.value === selectedTask)?.label || "";
+
     return (
       React.createElement("div", { className: "list-screen" },
         renderSideMenu(),
@@ -974,60 +984,84 @@ function App() {
         ),
         React.createElement("div", { className: "container" },
           
-          /* ①①画面上に「1.点検業務をリストから選択」と説明文をラベル表示 */
-          React.createElement("div", { className: "section-label" }, "1.点検業務をリストから選択"),
-          
-          /* ②プルダウンメニューを設置 */
-          React.createElement("select", {
-            className: "select-box task-select",
-            value: selectedTask,
-            onChange: handleTaskChange
-          },
-            React.createElement("option", { value: "" }, "点検業務を選択"),
-            taskOptions.map((opt) => 
-              React.createElement("option", { key: opt.value, value: opt.value }, opt.label)
-            )
-          ),
-
-          /* ③プルダウンメニューから点検業務が選択されたら */
-          selectedTask && React.createElement("div", { className: "file-selection-area" },
-            React.createElement("div", { className: "section-label" }, "2.読み込むエクセルファイルを選択"),
-
-            /* 1つ目のファイル選択ボタン */
-            React.createElement("div", { className: "file-wrapper-box" },
-              React.createElement("div", { className: "fake-file-input" },
-                React.createElement("label", { className: "fake-file-button" },
-                  "ファイル選択",
-                  React.createElement("input", {
-                    ref: fileInputRef1,
-                    type: "file",
-                    accept: ".xlsx, .xls",
-                    onChange: handleFile1Select,
-                    style: { display: "none" }
-                  })
-                ),
-                React.createElement("span", {
-                  className: `fake-file-text ${!file1Obj ? "is-empty-text" : ""}`
-                }, file1NameText)
+          /* 📌 読み込み未完了時の業務選択＆ファイル選択エリア */
+          !isLoaded && React.createElement(React.Fragment, null,
+            /* ①画面上に「1.点検業務をリストから選択」と説明文をラベル表示 */
+            React.createElement("div", { className: "section-label" }, "1.点検業務をリストから選択"),
+            
+            /* ②プルダウンメニューを設置 */
+            React.createElement("select", {
+              className: "select-box task-select",
+              value: selectedTask,
+              onChange: handleTaskChange
+            },
+              React.createElement("option", { value: "" }, "点検業務を選択"),
+              taskOptions.map((opt) => 
+                React.createElement("option", { key: opt.value, value: opt.value }, opt.label)
               )
             ),
 
-            /* 2つ目のファイル選択ボタン（02, 05, 20選択時のみ表示） */
-            isTwoButtonsTask && React.createElement("div", { className: "file-wrapper-box" },
-              React.createElement("div", { className: "fake-file-input" },
-                React.createElement("label", { className: "fake-file-button" },
-                  "ファイル選択",
-                  React.createElement("input", {
-                    ref: fileInputRef2,
-                    type: "file",
-                    accept: ".xlsx, .xls",
-                    onChange: handleFile2Select,
-                    style: { display: "none" }
-                  })
-                ),
-                React.createElement("span", {
-                  className: `fake-file-text ${!file2Obj ? "is-empty-text" : ""}`
-                }, file2NameText)
+            /* ③プルダウンメニューから点検業務が選択されたら */
+            selectedTask && React.createElement("div", { className: "file-selection-area" },
+              React.createElement("div", { className: "section-label" }, "2.読み込むエクセルファイルを選択"),
+
+              /* 1つ目のファイル選択ボタン */
+              React.createElement("div", { className: "file-wrapper-box" },
+                React.createElement("div", { className: "fake-file-input" },
+                  React.createElement("label", { className: "fake-file-button" },
+                    "ファイル選択",
+                    React.createElement("input", {
+                      ref: fileInputRef1,
+                      type: "file",
+                      accept: ".xlsx, .xls",
+                      onChange: handleFile1Select,
+                      style: { display: "none" }
+                    })
+                  ),
+                  React.createElement("span", {
+                    className: `fake-file-text ${!file1Obj ? "is-empty-text" : ""}`
+                  }, file1NameText)
+                )
+              ),
+
+              /* 2つ目のファイル選択ボタン（02, 05, 20選択時のみ表示） */
+              isTwoButtonsTask && React.createElement("div", { className: "file-wrapper-box" },
+                React.createElement("div", { className: "fake-file-input" },
+                  React.createElement("label", { className: "fake-file-button" },
+                    "ファイル選択",
+                    React.createElement("input", {
+                      ref: fileInputRef2,
+                      type: "file",
+                      accept: ".xlsx, .xls",
+                      onChange: handleFile2Select,
+                      style: { display: "none" }
+                    })
+                  ),
+                  React.createElement("span", {
+                    className: `fake-file-text ${!file2Obj ? "is-empty-text" : ""}`
+                  }, file2NameText)
+                )
+              )
+            )
+          ),
+
+          /* 📌 読み込み成功後のアコーディオン形式表示領域 */
+          isLoaded && React.createElement("div", { className: "accordion-card" },
+            React.createElement("div", {
+              className: "accordion-header",
+              onClick: () => setIsAccordionOpen(!isAccordionOpen)
+            },
+              React.createElement("span", { className: "accordion-title" }, selectedTaskLabel),
+              React.createElement("span", { className: `accordion-arrow ${isAccordionOpen ? "open" : ""}` }, "▼")
+            ),
+            isAccordionOpen && React.createElement("div", { className: "accordion-body" },
+              React.createElement("div", { className: "loaded-file-section" },
+                React.createElement("div", { className: "loaded-file-label" }, "点検詳細01"),
+                React.createElement("div", { className: "loaded-file-name" }, file1Obj ? file1Obj.fileName : "")
+              ),
+              isTwoFiles && React.createElement("div", { className: "loaded-file-section" },
+                React.createElement("div", { className: "loaded-file-label" }, "点検詳細02"),
+                React.createElement("div", { className: "loaded-file-name" }, file2Obj ? file2Obj.fileName : "")
               )
             )
           ),
