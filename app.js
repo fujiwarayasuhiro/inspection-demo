@@ -1116,10 +1116,18 @@ function App() {
           renderListCards,
           
           records.length > 0 &&
-          React.createElement("button", {
-            className: "button",
-            onClick: exportExcel
-          }, "エクセル保存")
+          React.createElement("div", { className: "button-group" },
+            React.createElement("button", {
+              className: "button button-half",
+              onClick: exportExcel
+            }, "💾エクセル保存"),
+            React.createElement("a", {
+              className: "button button-half button-secondary",
+              href: "https://fujiwarayasuhiro.github.io/signature-poc/url-generator.html",
+              target: "_blank",
+              rel: "noopener noreferrer"
+            }, "✍️署名アプリ起動")
+          )
         )
       )
     );
