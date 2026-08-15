@@ -630,11 +630,11 @@ function App() {
     }
   };
 
-  // 📌 【修正内容③】「✚追加」ボタン押下時の処理関数
+  // 📌 【修正内容②】「✚追加」ボタン押下時の処理関数（一覧ヘッダーから呼び出し、自動遷移）
   const handleAddRecord = () => {
     // レコード追加の生成ヘルパー
     const createNewRecord = (targetHeaders, targetFields, targetRecordsList, targetInitValuesMap) => {
-      // 1. 3行目のレコード内容をテンプレート（ディープコピー）として作成
+      // 1. 1件目のレコード内容をテンプレート（ディープコピー）として作成
       let templateRec = {};
       if (targetRecordsList && targetRecordsList.length > 0) {
         templateRec = JSON.parse(JSON.stringify(targetRecordsList[0]));
@@ -679,6 +679,19 @@ function App() {
       const newRecords2 = [...records2, newRec2];
       setRecords2(newRecords2);
     }
+
+    // 新規追加された最終行レコードのインデックス
+    const newIndex = newRecords1.length - 1;
+
+    // 画面遷移およびState初期化
+    setSelectedIndex(newIndex);
+    setErrorIndices([]);
+    setErrorIndices2([]);
+    setDuplicateErrorIndices([]);
+    setDuplicateErrorIndices2([]);
+    setActiveTab("file1");
+    setIsDetailCardOpen(true);
+    setScreen("detail");
 
     showToast("新規レコードを追加しました");
   };
@@ -748,7 +761,7 @@ function App() {
       return; // 画面遷移をストップ
     }
 
-    // 📌 【修正内容①】重複入力不可項目(◎)の重複チェック処理
+    // 📌 【修正内容①】重複入力不可項目(◎)の複合キーによる重複チェック処理
     const duplicateIndices1 = [];
     const duplicateIndices2 = [];
 
@@ -763,36 +776,46 @@ function App() {
       return list;
     };
 
+    // 📌 ファイル1の複合キー重複チェック
     const dupHeaders1 = getNoDuplicateHeaders(headers);
     if (dupHeaders1.length > 0 && records.length > 1) {
-      dupHeaders1.forEach(({ header, index }) => {
-        const currentValue = String(currentRec1[header] || "").trim();
-        if (currentValue !== "") {
-          const isDup = records.some((rec, idx) => {
-            if (idx === selectedIndex) return false;
-            return String(rec[header] || "").trim() === currentValue;
-          });
-          if (isDup) {
-            duplicateIndices1.push(index);
-          }
+      // 複合キーの値を連結して作成（区切り文字 '\u001f' で結合）
+      const currentCompositeKey1 = dupHeaders1.map(({ header }) => String(currentRec1[header] || "").trim()).join("\u001f");
+      // 複合キーを構成する項目のうち1つでも入力値がある場合に判定を行う
+      const hasValue1 = dupHeaders1.some(({ header }) => String(currentRec1[header] || "").trim() !== "");
+
+      if (hasValue1) {
+        const isDup1 = records.some((rec, idx) => {
+          if (idx === selectedIndex) return false;
+          const otherCompositeKey = dupHeaders1.map(({ header }) => String(rec[header] || "").trim()).join("\u001f");
+          return otherCompositeKey === currentCompositeKey1;
+        });
+
+        if (isDup1) {
+          dupHeaders1.forEach(({ index }) => duplicateIndices1.push(index));
         }
-      });
+      }
     }
 
+    // 📌 ファイル2の複合キー重複チェック
     if (isTwoFiles && currentRec2 && records2.length > 1) {
       const dupHeaders2 = getNoDuplicateHeaders(headers2);
-      dupHeaders2.forEach(({ header, index }) => {
-        const currentValue = String(currentRec2[header] || "").trim();
-        if (currentValue !== "") {
-          const isDup = records2.some((rec, idx) => {
+      if (dupHeaders2.length > 0) {
+        const currentCompositeKey2 = dupHeaders2.map(({ header }) => String(currentRec2[header] || "").trim()).join("\u001f");
+        const hasValue2 = dupHeaders2.some(({ header }) => String(currentRec2[header] || "").trim() !== "");
+
+        if (hasValue2) {
+          const isDup2 = records2.some((rec, idx) => {
             if (idx === selectedIndex) return false;
-            return String(rec[header] || "").trim() === currentValue;
+            const otherCompositeKey = dupHeaders2.map(({ header }) => String(rec[header] || "").trim()).join("\u001f");
+            return otherCompositeKey === currentCompositeKey2;
           });
-          if (isDup) {
-            duplicateIndices2.push(index);
+
+          if (isDup2) {
+            dupHeaders2.forEach(({ index }) => duplicateIndices2.push(index));
           }
         }
-      });
+      }
     }
 
     if (duplicateIndices1.length > 0 || duplicateIndices2.length > 0) {
@@ -1133,11 +1156,13 @@ function App() {
             className: "header-back-btn",
             onClick: () => setScreen("list")
           }, "＜戻る"),
-          "アプリバージョン情報"
+          React.createElement("span", null, "アプリバージョン情報")
         ),
-        React.createElement("div", { className: "container info-container" },
+        React.createElement("div", { className: "info-container" },
           React.createElement("div", { className: "info-card" },
-            "アプリバージョン：Ver.1.0.0"
+            React.createElement("p", null, React.createElement("strong", null, "アプリ名称："), "点検入力アプリ"),
+            React.createElement("p", null, React.createElement("strong", null, "バージョン："), "Ver 1.0.0"),
+            React.createElement("p", null, React.createElement("strong", null, "リリース日："), "2026年3月")
           )
         )
       )
@@ -1153,438 +1178,409 @@ function App() {
             className: "header-back-btn",
             onClick: () => setScreen("list")
           }, "＜戻る"),
-          "ライセンス情報"
+          React.createElement("span", null, "ライセンス情報")
         ),
-        React.createElement("div", { className: "container info-container" },
+        React.createElement("div", { className: "info-container" },
           React.createElement("div", { className: "info-card" },
-            "OSSライセンス情報：SheetJS (Apache License 2.0), React (MIT License)"
+            React.createElement("h3", null, "使用ライブラリ"),
+            React.createElement("ul", null,
+              React.createElement("li", null, "React v18 (MIT License)"),
+              React.createElement("li", null, "ReactDOM v18 (MIT License)"),
+              React.createElement("li", null, "SheetJS / xlsx (Apache 2.0 License)")
+            )
           )
         )
       )
     );
   }
 
-  // 一覧画面
+  // 📌 一覧画面のレンダリング
   if (screen === "list") {
-    const selectedTaskLabel = taskOptions.find(opt => opt.value === selectedTask)?.label || "";
-
     return (
       React.createElement("div", { className: "list-screen" },
-        renderSideMenu(),
-        
-        // トースト通知表示
-        toastMessage && React.createElement("div", { className: "toast-notification" }, toastMessage),
-
-        React.createElement("div", { className: "header" }, 
+        // 📌 【修正内容②】青色ヘッダー右端に「✚追加」ボタンを配置（データ読み込み済みの場合のみ表示）
+        React.createElement("div", { className: "header" },
           React.createElement("button", {
             className: "hamburger-btn",
             onClick: () => setIsMenuOpen(true)
-          }, "Ξ"),
-          "点検入力アプリ"
-        ),
-        React.createElement("div", { className: "container" },
-          
-          /* 📌 読み込み未完了時の業務選択＆ファイル選択エリア */
-          !isLoaded && React.createElement(React.Fragment, null,
-            /* ①画面上に「1.点検業務をリストから選択」と説明文をラベル表示 */
-            React.createElement("div", { className: "section-label" }, "1.点検業務をリストから選択"),
-            
-            /* ②プルダウンメニューを設置 */
-            React.createElement("select", {
-              className: "select-box task-select",
-              value: selectedTask,
-              onChange: handleTaskChange
-            },
-              React.createElement("option", { value: "" }, "点検業務を選択"),
-              taskOptions.map((opt) => 
-                React.createElement("option", { key: opt.value, value: opt.value }, opt.label)
-              )
-            ),
-
-            /* ③プルダウンメニューから点検業務が選択されたら */
-            selectedTask && React.createElement("div", { className: "file-selection-area" },
-              React.createElement("div", { className: "section-label" }, "2.読み込むエクセルファイルを選択"),
-
-              /* 1つ目のファイル選択ボタン */
-              React.createElement("div", { className: "file-wrapper-box" },
-                React.createElement("div", { className: "fake-file-input" },
-                  React.createElement("label", { className: "fake-file-button" },
-                    "ファイル選択",
-                    React.createElement("input", {
-                      ref: fileInputRef1,
-                      type: "file",
-                      accept: ".xlsx, .xls",
-                      onChange: handleFile1Select,
-                      style: { display: "none" }
-                    })
-                  ),
-                  React.createElement("span", {
-                    className: `fake-file-text ${!file1Obj ? "is-empty-text" : ""}`
-                  }, file1NameText)
-                )
-              ),
-
-              /* 2つ目のファイル選択ボタン（02, 05, 20選択時のみ表示） */
-              isTwoButtonsTask && React.createElement("div", { className: "file-wrapper-box" },
-                React.createElement("div", { className: "fake-file-input" },
-                  React.createElement("label", { className: "fake-file-button" },
-                    "ファイル選択",
-                    React.createElement("input", {
-                      ref: fileInputRef2,
-                      type: "file",
-                      accept: ".xlsx, .xls",
-                      onChange: handleFile2Select,
-                      style: { display: "none" }
-                    })
-                  ),
-                  React.createElement("span", {
-                    className: `fake-file-text ${!file2Obj ? "is-empty-text" : ""}`
-                  }, file2NameText)
-                )
-              )
-            )
-          ),
-
-          /* 📌 読み込み成功後のアコーディオン形式表示領域 */
-          isLoaded && React.createElement("div", { className: "accordion-card" },
-            React.createElement("div", {
-              className: "accordion-header",
-              onClick: () => setIsAccordionOpen(!isAccordionOpen)
-            },
-              React.createElement("span", { className: "accordion-title" }, selectedTaskLabel),
-              React.createElement("span", { className: `accordion-arrow ${isAccordionOpen ? "open" : ""}` }, "▼")
-            ),
-            isAccordionOpen && React.createElement("div", { className: "accordion-body" },
-              React.createElement("div", { className: "loaded-file-section" },
-                React.createElement("div", { className: "loaded-file-label" }, "📋点検詳細01"),
-                React.createElement("div", { className: "loaded-file-name" }, file1Obj ? file1Obj.fileName : "")
-              ),
-              isTwoFiles && React.createElement("div", { className: "loaded-file-section" },
-                React.createElement("div", { className: "loaded-file-label" }, "📋点検詳細02"),
-                React.createElement("div", { className: "loaded-file-name" }, file2Obj ? file2Obj.fileName : "")
-              )
-            )
-          ),
-
-          /* 📌 ファイル未読み込み時のイラストアイコン表示 */
-          records.length === 0 && React.createElement("div", { className: "placeholder-container" },
-            React.createElement("svg", {
-              width: "160",
-              height: "180",
-              viewBox: "0 0 160 180",
-              fill: "none",
-              xmlns: "http://www.w3.org/2000/svg",
-              className: "placeholder-svg"
-            },
-              // 背景のソフトな丸
-              React.createElement("circle", { cx: "80", cy: "90", r: "75", fill: "#eef6ff" }),
-
-              // クリップボード本体
-              React.createElement("rect", { x: "35", y: "30", width: "80", height: "105", rx: "10", fill: "#ffffff", stroke: "#5b88b2", strokeWidth: "4" }),
-              
-              // クリップ部分
-              React.createElement("rect", { x: "57", y: "20", width: "36", height: "18", rx: "5", fill: "#d2e4f7", stroke: "#5b88b2", strokeWidth: "3" }),
-              React.createElement("circle", { cx: "75", cy: "27", r: "3", fill: "#5b88b2" }),
-
-              // はてなマーク 「？」
-              React.createElement("text", {
-                x: "73",
-                y: "95",
-                fontSize: "48",
-                fontWeight: "bold",
-                fill: "#2b6cb0",
-                fontFamily: "sans-serif",
-                textAnchor: "middle"
-              }, "?"),
-
-              // 歯車マーク（右下）
-              React.createElement("g", { transform: "translate(95, 105)" },
-                // 歯車の外枠＆歯
-                React.createElement("path", {
-                  d: "M22 0L25 5C28 6 31 8 33 10L39 8L42 14L37 18C38 21 38 24 37 27L42 31L39 37L33 35C31 37 28 39 25 40L22 45H16L13 40C10 39 7 37 5 35L-1 37L-4 31L1 27C0 24 0 21 1 18L-4 14L-1 8L5 10C7 8 10 6 13 5L16 0H22Z",
-                  fill: "#ffffff",
-                  stroke: "#4a75a0",
-                  strokeWidth: "3.5",
-                  strokeLinejoin: "round"
-                }),
-                // 歯車の中心穴
-                React.createElement("circle", { cx: "19", cy: "22.5", r: "8", fill: "#eef6ff", stroke: "#4a75a0", strokeWidth: "3.5" })
-              )
-            )
-          ),
-                            
-          renderListCards,
-          
-          records.length > 0 &&
-          React.createElement("div", { className: "button-group" },
-            React.createElement("button", {
-              className: "button button-half",
-              onClick: exportExcel
-            }, "💾エクセル保存"),
-            React.createElement("a", {
-              className: "button button-half button-secondary",
-              href: "https://fujiwarayasuhiro.github.io/signature-poc/url-generator.html",
-              target: "_blank",
-              rel: "noopener noreferrer"
-            }, "✍️署名アプリ起動")
-          )
-        )
-      )
-    );
-  }
-
-  // 詳細画面用のカレントレコードを取得
-  const currentRecord1 = records[selectedIndex];
-  const currentRecord2 = isTwoFiles ? records2[selectedIndex] : null;
-
-  const isFile2Active = activeTab === "file2";
-
-  // 📌 入力コンポーネント生成ヘルパー
-  const renderFieldsList = (targetHeaders, targetFields, targetRecord, targetSelectOptions, targetErrorIndices, targetDupIndices, isFile2) => {
-    const targetVisibleMap = getVisibleFieldsMap(targetRecord, isFile2);
-
-    return targetHeaders.map((h, i) => {
-      // 📌 項目名に「◆」が含まれている場合は非表示（何もレンダリングしない）
-      if (h && h.includes("◆")) {
-        return null;
-      }
-
-      const currentFid = targetFields[i];
-
-      // 📌 「入力条件設定」シートによる動的表示制御の適用
-      if (currentFid && targetVisibleMap[currentFid] === false) {
-        return null;
-      }
-
-      const rawValue = targetRecord[h] === undefined || targetRecord[h] === null ? "" : targetRecord[h];
-      
-      // 📌 「■■」が含まれていれば大見出し、「■」が含まれていれば小見出しとして判定
-      const isMainHeading = h && h.includes("■■");
-      const isSubHeading = h && !isMainHeading && h.includes("■");
-
-      if (isMainHeading) {
-        return React.createElement("div", {
-          key: i,
-          className: "card is-main-heading"
-        }, h);
-      }
-
-      if (isSubHeading) {
-        return React.createElement("div", {
-          key: i,
-          className: "card is-sub-heading"
-        }, h);
-      }
-
-      // 通常の項目の場合
-      const type = getInputType(h, rawValue, isFile2);
-      const value = (type === "date" || type === "month") ? formatDateForInput(rawValue, type === "month") : rawValue;
-
-      const unitMatch = h && h.match(/『([^』]+)』/);
-      const unitText = unitMatch ? unitMatch[1] : null;
-
-      const isSelect = h && h.includes("▼");
-      const hasOptions = currentFid && targetSelectOptions[currentFid] && targetSelectOptions[currentFid].length > 0;
-      
-      const isDisabled = h && h.includes("▲");
-      const isRequired = h && h.includes("※");
-      
-      // 📌 エラー判定（必須エラー & 重複エラー）
-      const hasError = targetErrorIndices.includes(i) && (rawValue === undefined || rawValue === null || String(rawValue).trim() === "");
-      const hasDupError = targetDupIndices.includes(i);
-
-      let inputElement;
-
-      if (isBool(h)) {
-        inputElement = React.createElement("div", { className: "radio-row" },
-          React.createElement("label", { className: `radio-item is-maru ${isDisabled ? "is-disabled" : ""}` },
-            React.createElement("input", {
-              type: "radio",
-              name: `${h}_${isFile2 ? "file2" : "file1"}`,
-              checked: rawValue === "○",
-              disabled: isDisabled,
-              onChange: () => updateValue(h, "○", isFile2)
-            }),
-            React.createElement("span", null, "○")
-          ),
-          React.createElement("label", { className: `radio-item is-batsu ${isDisabled ? "is-disabled" : ""}` },
-            React.createElement("input", {
-              type: "radio",
-              name: `${h}_${isFile2 ? "file2" : "file1"}`,
-              checked: rawValue === "×",
-              disabled: isDisabled,
-              onChange: () => updateValue(h, "×", isFile2)
-            }),
-            React.createElement("span", null, "×")
-          )
-        );
-      } else if (isSelect && hasOptions) {
-        inputElement = React.createElement("select", {
-          className: `select-box ${(hasError || hasDupError) ? "input-error" : ""}`,
-          value: rawValue,
-          disabled: isDisabled,
-          onChange: (e) => updateValue(h, e.target.value, isFile2)
-        },
-          React.createElement("option", { value: "" }, "-- 選択してください --"),
-          targetSelectOptions[currentFid].map((opt, idx) => 
-            React.createElement("option", { key: idx, value: opt }, opt)
-          )
-        );
-      } else {
-        const inputField = React.createElement("input", {
-          type: type,
-          value: value,
-          className: (hasError || hasDupError) ? "input-error" : "",
-          disabled: isDisabled,
-          onChange: (e) => {
-            if (type === "date" || type === "month") {
-              handleDateChange(h, e.target.value, type === "month", isFile2);
-            } else {
-              updateValue(h, e.target.value, isFile2);
-            }
-          }
-        });
-
-        if (unitText) {
-          inputElement = React.createElement("div", { className: "input-with-unit" },
-            inputField,
-            React.createElement("span", { className: "input-unit-text" }, unitText)
-          );
-        } else {
-          inputElement = inputField;
-        }
-      }
-
-      const isSelectionType = isBool(h) || isSelect || type === "date" || type === "month";
-      const errorMessage = isSelectionType ? "未選択です" : "未入力です";
-
-      return React.createElement("div", {
-        key: i,
-        className: `card ${isDisabled ? "is-disabled-card" : ""} ${(hasError || hasDupError) ? "card-error" : ""}`
-      },
-        React.createElement("div", { className: "card-title-row" },
-          React.createElement("div", { className: "card-title" }, h),
-          isRequired && React.createElement("span", { className: "required-badge" }, "必須")
-        ),
-        inputElement,
-        hasError && React.createElement("div", { className: "error-message-text" }, errorMessage),
-        hasDupError && React.createElement("div", { className: "error-message-text" }, "重複入力です")
-      );
-    });
-  };
-
-  // 詳細画面
-  return (
-    React.createElement("div", { className: "detail-screen" },
-      renderSideMenu(),
-      
-      // 📌 トースト通知表示
-      toastMessage && React.createElement("div", { className: "toast-notification" }, toastMessage),
-
-      React.createElement("div", { className: "sticky-header" },
-        // 📌 ②【修正内容②】青色ヘッダー右端に「✚追加」ボタンを配置
-        React.createElement("div", { className: "header header-detail" }, 
-          React.createElement("button", {
-            className: "hamburger-btn",
-            onClick: () => setIsMenuOpen(true)
-          }, "Ξ"),
-          React.createElement("span", { className: "header-title" }, "点検詳細入力"),
-          React.createElement("button", {
+          }, "☰"),
+          React.createElement("span", null, "点検入力アプリ"),
+          React.createElement("span", { className: "header-ver" }, "Ver 1.0.0"),
+          isLoaded && React.createElement("button", {
             className: "header-add-btn",
             onClick: handleAddRecord
           }, "✚追加")
         ),
-        React.createElement("div", { className: "action-bar" },
-          React.createElement("div", { className: "action-left" },
-            React.createElement("button", {
-              className: "button-back",
-              onClick: handleBack // 📌 チェックロジック
-            }, "＜戻る")
-          ),
-          React.createElement("div", { className: "action-center" },
-            `${selectedIndex + 1} ／ ${records.length}`
-          ),
-          React.createElement("div", { className: "action-right" },
-            React.createElement("label", { className: "complete-checkbox-label" },
-              React.createElement("input", {
-                type: "checkbox",
-                checked: !!currentRecord1._isCompleted,
-                onChange: (e) => updateValue("_isCompleted", e.target.checked, false)
-              }),
-              "点検完了"
-            )
-          )
-        ),
-        
-        /* 📌 アコーディオン化された固定表示カードエリア */
-        React.createElement("div", { className: "floating-card-container" },
-          React.createElement("div", { 
-            className: `floating-card ${currentRecord1._isCompleted ? "is-completed" : ""}`,
-            onClick: () => setIsDetailCardOpen(!isDetailCardOpen) // 📌 タップで開閉できる領域をタイル全体に拡張
-          },
-            // アコーディオンの開閉トグルボタン
-            React.createElement("button", {
-              className: "floating-card-toggle",
-              "aria-label": "カードの開閉"
-            }, isDetailCardOpen ? "∧" : "∨"),
-            
-            // 📌 カードの内容（開いている時のみ表示）および閉じている場合のガイド表示
-            isDetailCardOpen ? (
-              headers.slice(0, parseInt(paramInfo1.cardColumns, 10) || 4).map((h, idx) =>
-                React.createElement("div", { key: idx },
-                  String(currentRecord1[h] || "")
+
+        renderSideMenu(),
+
+        // トースト通知表示エリア
+        toastMessage && React.createElement("div", { className: "toast-notification" }, toastMessage),
+
+        React.createElement("div", { className: "container" },
+
+          // アコーディオン形式のファイル読込・情報表示領域
+          React.createElement("div", { className: "accordion-card" },
+            React.createElement("div", {
+              className: "accordion-header",
+              onClick: () => setIsAccordionOpen(!isAccordionOpen)
+            },
+              React.createElement("span", null, isLoaded ? "点検基本情報" : "点検ファイル読込"),
+              React.createElement("span", { className: `accordion-arrow ${isAccordionOpen ? "open" : ""}` }, "▼")
+            ),
+
+            isAccordionOpen && React.createElement("div", { className: "accordion-body" },
+              !isLoaded ? (
+                // 📂 未読み込み時：点検業務プルダウンとファイル選択エリア
+                React.createElement(React.Fragment, null,
+                  React.createElement("div", { className: "task-select" },
+                    React.createElement("div", { className: "section-label" }, "1. 点検業務選択"),
+                    React.createElement("select", {
+                      className: "select-box",
+                      value: selectedTask,
+                      onChange: handleTaskChange
+                    },
+                      React.createElement("option", { value: "" }, "点検業務を選択してください"),
+                      taskOptions.map(opt =>
+                        React.createElement("option", { key: opt.value, value: opt.value }, opt.label)
+                      )
+                    )
+                  ),
+
+                  selectedTask && React.createElement("div", { className: "file-selection-area" },
+                    React.createElement("div", { className: "section-label" }, "2. エクセルファイル選択"),
+
+                    // 1つ目のファイル選択エリア
+                    React.createElement("div", { className: "file-wrapper-box" },
+                      React.createElement("div", { className: "fake-file-input" },
+                        React.createElement("label", {
+                          className: "fake-file-button",
+                          onClick: () => fileInputRef1.current && fileInputRef1.current.click()
+                        }, isTwoButtonsTask ? "点検詳細01" : "ファイル選択"),
+                        React.createElement("span", {
+                          className: `fake-file-text ${!file1Obj ? "is-empty-text" : ""}`
+                        }, file1NameText)
+                      ),
+                      React.createElement("input", {
+                        type: "file",
+                        ref: fileInputRef1,
+                        accept: ".xlsx, .xls",
+                        style: { display: "none" },
+                        onChange: handleFile1Select
+                      })
+                    ),
+
+                    // 2つ目のファイル選択エリア（02, 05, 20が選択されている場合のみ表示）
+                    isTwoButtonsTask && React.createElement("div", { className: "file-wrapper-box" },
+                      React.createElement("div", { className: "fake-file-input" },
+                        React.createElement("label", {
+                          className: "fake-file-button",
+                          onClick: () => fileInputRef2.current && fileInputRef2.current.click()
+                        }, "点検詳細02"),
+                        React.createElement("span", {
+                          className: `fake-file-text ${!file2Obj ? "is-empty-text" : ""}`
+                        }, file2NameText)
+                      ),
+                      React.createElement("input", {
+                        type: "file",
+                        ref: fileInputRef2,
+                        accept: ".xlsx, .xls",
+                        style: { display: "none" },
+                        onChange: handleFile2Select
+                      })
+                    )
+                  )
+                )
+              ) : (
+                // 📄 読み込み完了時：読み込まれたファイル情報の表示
+                React.createElement("div", null,
+                  React.createElement("div", { className: "loaded-file-section" },
+                    React.createElement("div", { className: "loaded-file-label" }, "点検詳細01ファイル名:"),
+                    React.createElement("div", { className: "loaded-file-name" }, file1NameText)
+                  ),
+                  isTwoFiles && React.createElement("div", { className: "loaded-file-section", style: { marginTop: "12px" } },
+                    React.createElement("div", { className: "loaded-file-label" }, "点検詳細02ファイル名:"),
+                    React.createElement("div", { className: "loaded-file-name" }, file2NameText)
+                  )
                 )
               )
-            ) : (
-              React.createElement("div", { className: "floating-card-closed-label" },
-                "タップで開閉(系統・拠点情報表示)"
+            )
+          ),
+
+          // 📌 データが読み込まれている場合はレコード一覧・署名・エクセル保存ボタンを表示
+          isLoaded ? (
+            React.createElement(React.Fragment, null,
+              renderListCards,
+
+              // ボタン2つ横並びのグループ化
+              React.createElement("div", { className: "button-group" },
+                React.createElement("a", {
+                  href: "ms-excel:ofv|u|https://example.com/sign.xlsx",
+                  className: "button button-secondary button-half"
+                }, "✍️ 署名アプリ起動"),
+                React.createElement("button", {
+                  className: "button button-half",
+                  onClick: exportExcel
+                }, "💾 エクセル保存")
               )
             )
-          )
-        ),
-
-        /* 📌 ③ タブボタンのスタイル切り替え（2ファイル選択時のみ表示） */
-        isTwoFiles && React.createElement("div", { className: "tab-bar-container" },
-          React.createElement("div", { className: "segmented-control" },
-            React.createElement("button", {
-              className: `tab-button tab-01 ${activeTab === "file1" ? "active" : "inactive"}`,
-              onClick: () => setActiveTab("file1")
-            }, "点検詳細01"),
-            React.createElement("button", {
-              className: `tab-button tab-02 ${activeTab === "file2" ? "active" : "inactive"}`,
-              onClick: () => setActiveTab("file2")
-            }, "点検詳細02")
-          )
-        )
-      ),
-
-      /* 📌 ④ 点検詳細01と02のスクロールを独立させた表示領域 */
-      React.createElement("div", { className: "detail-content-scroll" },
-        // タブ1 (点検詳細01)
-        React.createElement("div", {
-          ref: tab1ScrollRef,
-          className: "tab-scroll-container theme-tab1",
-          style: { display: activeTab === "file1" ? "block" : "none" }
-        },
-          React.createElement("div", { className: "container" },
-            renderFieldsList(headers, fields, currentRecord1, selectOptions, errorIndices, duplicateErrorIndices, false)
-          )
-        ),
-
-        // タブ2 (点検詳細02)
-        isTwoFiles && currentRecord2 && React.createElement("div", {
-          ref: tab2ScrollRef,
-          className: "tab-scroll-container theme-tab2",
-          style: { display: activeTab === "file2" ? "block" : "none" }
-        },
-          React.createElement("div", { className: "container" },
-            renderFieldsList(headers2, fields2, currentRecord2, selectOptions2, errorIndices2, duplicateErrorIndices2, true)
+          ) : (
+            // 📌 ファイル未読み込み時のイラストプレースホルダー表示
+            React.createElement("div", { className: "placeholder-container" },
+              React.createElement("svg", {
+                className: "placeholder-svg",
+                width: "120",
+                height: "120",
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "#a0aec0",
+                strokeWidth: "1.5",
+                strokeLinecap: "round",
+                strokeLinejoin: "round"
+              },
+                React.createElement("path", { d: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" }),
+                React.createElement("polyline", { points: "14 2 14 8 20 8" }),
+                React.createElement("line", { x1: "12", y1: "18", x2: "12", y2: "12" }),
+                React.createElement("line", { x1: "9", y1: "15", x2: "15", y2: "15" })
+              ),
+              React.createElement("p", { style: { color: "#718096", fontSize: "14px", marginTop: "12px", fontWeight: "bold" } },
+                "上のエリアから点検業務を選択し、\nエクセルファイルを読み込んでください"
+              )
+            )
           )
         )
       )
-    )
-  );
+    );
+  }
+
+  // 📌 詳細入力画面のレンダリング
+  if (screen === "detail" && selectedIndex !== null) {
+    // 📌 タブ切り替えによる表示データ（ファイル1 / ファイル2）の切り替え
+    const currentIsFile2 = activeTab === "file2";
+    const currentHeaders = currentIsFile2 ? headers2 : headers;
+    const currentFields = currentIsFile2 ? fields2 : fields;
+    const currentRecords = currentIsFile2 ? records2 : records;
+    const currentRecord = currentRecords[selectedIndex] || {};
+    const currentOptions = currentIsFile2 ? selectOptions2 : selectOptions;
+
+    // 📌 動的表示可否マップの取得
+    const visibleMap = getVisibleFieldsMap(currentRecord, currentIsFile2);
+
+    return (
+      React.createElement("div", { className: "detail-screen" },
+        // 📌 詳細画面ヘッダー（「✚追加」ボタンを削除）
+        React.createElement("div", { className: "header header-detail" },
+          React.createElement("button", {
+            className: "button-back",
+            onClick: handleBack
+          }, "＜ 戻る"),
+          React.createElement("div", { className: "header-title" }, "点検詳細入力")
+        ),
+
+        // 📌 上部固定エリア（アクションバー ＆ タブバー ＆ フローティングバナー）
+        React.createElement("div", { className: "sticky-header" },
+          React.createElement("div", { className: "action-bar" },
+            React.createElement("div", { className: "action-left" },
+              React.createElement("label", { className: "complete-checkbox-label" },
+                React.createElement("input", {
+                  type: "checkbox",
+                  checked: !!currentRecord._isCompleted,
+                  onChange: (e) => updateValue("_isCompleted", e.target.checked, currentIsFile2)
+                }),
+                "点検完了"
+              )
+            ),
+            React.createElement("div", { className: "action-center" },
+              `${selectedIndex + 1} / ${records.length}`
+            ),
+            React.createElement("div", { className: "action-right" })
+          ),
+
+          // 2ファイル対応時のタブ切り替え（セグメントコントロール風デザイン）
+          isTwoFiles && React.createElement("div", { className: "tab-bar-container" },
+            React.createElement("div", { className: "segmented-control" },
+              React.createElement("button", {
+                className: `tab-button tab-01 ${activeTab === "file1" ? "active" : "inactive"}`,
+                onClick: () => setActiveTab("file1")
+              }, "点検詳細01"),
+              React.createElement("button", {
+                className: `tab-button tab-02 ${activeTab === "file2" ? "active" : "inactive"}`,
+                onClick: () => setActiveTab("file2")
+              }, "点検詳細02")
+            )
+          ),
+
+          // 上部固定エリア：1〜4行目情報のアコーディオン表示
+          React.createElement("div", { className: "floating-card-container" },
+            React.createElement("div", {
+              className: `floating-card ${currentRecord._isCompleted ? "is-completed" : ""}`,
+              onClick: () => setIsDetailCardOpen(!isDetailCardOpen)
+            },
+              React.createElement("button", { className: "floating-card-toggle" },
+                isDetailCardOpen ? "▲" : "▼"
+              ),
+              isDetailCardOpen ? (
+                currentHeaders.slice(0, 4).map((h, idx) =>
+                  React.createElement("div", { key: idx },
+                    React.createElement("strong", null, h, ": "),
+                    String(currentRecord[h] || "")
+                  )
+                )
+              ) : (
+                React.createElement("div", { className: "floating-card-closed-label" },
+                  "📋 タップして機器の基本情報を表示"
+                )
+              )
+            )
+          )
+        ),
+
+        // 📌 入力フォームエリア（タブ切り替えによるテーマカラーとスクロールエリア分離）
+        React.createElement("div", { className: "detail-content-scroll" },
+          React.createElement("div", {
+            ref: currentIsFile2 ? tab2ScrollRef : tab1ScrollRef,
+            className: `tab-scroll-container ${currentIsFile2 ? "theme-tab2" : "theme-tab1"}`
+          },
+            React.createElement("div", { className: "container" },
+              currentHeaders.map((h, i) => {
+                // 1列目（A列）および「◆」が含まれる非表示項目は非表示
+                if (i === 0 || (h && h.includes("◆"))) return null;
+
+                // 📌 「入力条件設定」による動的表示制御（非表示の場合はレンダリングしない）
+                const currentFid = currentFields[i];
+                if (currentFid && visibleMap[currentFid] === false) {
+                  return null;
+                }
+
+                // 📌 大見出し（■■）の表示
+                if (h && h.includes("■■")) {
+                  const titleText = h.replace(/■■/g, "").trim();
+                  return React.createElement("div", {
+                    key: i,
+                    className: "card is-main-heading"
+                  }, titleText);
+                }
+
+                // 📌 小見出し（■）の表示
+                if (h && h.includes("■")) {
+                  const titleText = h.replace(/■/g, "").trim();
+                  return React.createElement("div", {
+                    key: i,
+                    className: "card is-sub-heading"
+                  }, titleText);
+                }
+
+                const value = currentRecord[h] || "";
+                const isDisable = h && h.includes("▲");
+                const isRequired = h && h.includes("※");
+
+                // 📌 未入力エラー判定
+                const activeErrorIndices = currentIsFile2 ? errorIndices2 : errorIndices;
+                const isError = activeErrorIndices.includes(i);
+
+                // 📌 【追加】重複入力エラー判定
+                const activeDuplicateIndices = currentIsFile2 ? duplicateErrorIndices2 : duplicateErrorIndices;
+                const isDuplicateError = activeDuplicateIndices.includes(i);
+
+                // 単位『』の抽出ロジック
+                let unitText = "";
+                let displayTitle = h;
+                const unitMatch = h.match(/『(.*?)』/);
+                if (unitMatch) {
+                  unitText = unitMatch[1];
+                  displayTitle = h.replace(/『.*?』/g, "");
+                }
+
+                const inputType = getInputType(h, value, currentIsFile2);
+                const options = (currentFid && currentOptions[currentFid]) ? currentOptions[currentFid] : null;
+
+                return React.createElement("div", {
+                  key: i,
+                  className: `card ${currentRecord._isCompleted ? "is-completed" : ""} ${isDisable ? "is-disabled-card" : ""} ${(isError || isDuplicateError) ? "card-error" : ""}`
+                },
+                  React.createElement("div", { className: "card-title-row" },
+                    React.createElement("div", { className: "card-title" }, displayTitle),
+                    isRequired && React.createElement("span", { className: "required-badge" }, "必須")
+                  ),
+
+                  // 1. ラジオボタン（○ / ×）形式
+                  isBool(h) ? (
+                    React.createElement("div", { className: "radio-row" },
+                      React.createElement("label", {
+                        className: `radio-item is-maru ${isDisable ? "is-disabled" : ""}`
+                      },
+                        React.createElement("input", {
+                          type: "radio",
+                          name: `radio-${selectedIndex}-${i}-${activeTab}`,
+                          value: "○",
+                          checked: value === "○",
+                          disabled: isDisable,
+                          onChange: (e) => updateValue(h, e.target.value, currentIsFile2)
+                        }),
+                        "○"
+                      ),
+                      React.createElement("label", {
+                        className: `radio-item is-batsu ${isDisable ? "is-disabled" : ""}`
+                      },
+                        React.createElement("input", {
+                          type: "radio",
+                          name: `radio-${selectedIndex}-${i}-${activeTab}`,
+                          value: "×",
+                          checked: value === "×",
+                          disabled: isDisable,
+                          onChange: (e) => updateValue(h, e.target.value, currentIsFile2)
+                        }),
+                        "×"
+                      )
+                    )
+                  ) : options ? (
+                    // 2. ▼リスト（プルダウン）形式
+                    React.createElement("select", {
+                      className: `select-box ${(isError || isDuplicateError) ? "input-error" : ""}`,
+                      value: value,
+                      disabled: isDisable,
+                      onChange: (e) => updateValue(h, e.target.value, currentIsFile2)
+                    },
+                      React.createElement("option", { value: "" }, "選択してください"),
+                      options.map((opt, optIdx) =>
+                        React.createElement("option", { key: optIdx, value: opt }, opt)
+                      )
+                    )
+                  ) : (
+                    // 3. 通常入力欄（テキスト / 数値 / 日付 / 年月）
+                    React.createElement("div", { className: "input-with-unit" },
+                      React.createElement("input", {
+                        type: inputType,
+                        className: (isError || isDuplicateError) ? "input-error" : "",
+                        value: (inputType === "date" || inputType === "month") ? formatDateForInput(value, inputType === "month") : value,
+                        disabled: isDisable,
+                        onChange: (e) => {
+                          if (inputType === "date" || inputType === "month") {
+                            handleDateChange(h, e.target.value, inputType === "month", currentIsFile2);
+                          } else {
+                            updateValue(h, e.target.value, currentIsFile2);
+                          }
+                        }
+                      }),
+                      unitText && React.createElement("span", { className: "input-unit-text" }, unitText)
+                    )
+                  ),
+
+                  // エラーメッセージの表示
+                  isError && React.createElement("div", { className: "error-message-text" }, "必須項目を入力してください"),
+                  isDuplicateError && React.createElement("div", { className: "error-message-text" }, "他のレコードと入力内容が重複しています")
+                );
+              })
+            )
+          )
+        )
+      )
+    );
+  }
+
+  return null;
 }
 
-ReactDOM.createRoot(document.getElementById("root"))
-  .render(React.createElement(App));
+// Reactアプリのレンダリング
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(React.createElement(App));
