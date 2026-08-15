@@ -777,6 +777,8 @@ function App() {
           setScreen("detail");
         }
       },
+        // 📌 点検完了時の緑色バッジの追加
+        rec._isCompleted && React.createElement("div", { className: "card-completed-badge" }, "点検完了"),
         headers.slice(0, colCount).map((h, idx) =>
           React.createElement("div", { key: idx },
             String(rec[h] || "")
@@ -1312,19 +1314,25 @@ function App() {
         /* 📌 アコーディオン化された固定表示カードエリア */
         React.createElement("div", { className: "floating-card-container" },
           React.createElement("div", { 
-            className: `floating-card ${currentRecord1._isCompleted ? "is-completed" : ""}` 
+            className: `floating-card ${currentRecord1._isCompleted ? "is-completed" : ""}`,
+            onClick: () => setIsDetailCardOpen(!isDetailCardOpen) // 📌 タップで開閉できる領域をタイル全体に拡張
           },
             // アコーディオンの開閉トグルボタン
             React.createElement("button", {
               className: "floating-card-toggle",
-              onClick: () => setIsDetailCardOpen(!isDetailCardOpen),
               "aria-label": "カードの開閉"
             }, isDetailCardOpen ? "∧" : "∨"),
             
-            // カードの内容（開いている時のみ表示）
-            isDetailCardOpen && headers.slice(0, parseInt(paramInfo1.cardColumns, 10) || 4).map((h, idx) =>
-              React.createElement("div", { key: idx },
-                String(currentRecord1[h] || "")
+            // 📌 カードの内容（開いている時のみ表示）および閉じている場合のガイド表示
+            isDetailCardOpen ? (
+              headers.slice(0, parseInt(paramInfo1.cardColumns, 10) || 4).map((h, idx) =>
+                React.createElement("div", { key: idx },
+                  String(currentRecord1[h] || "")
+                )
+              )
+            ) : (
+              React.createElement("div", { className: "floating-card-closed-label" },
+                "タップで開閉(系統・拠点情報表示)"
               )
             )
           )
