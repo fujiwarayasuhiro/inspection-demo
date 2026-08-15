@@ -564,25 +564,62 @@ function App() {
     }
   };
 
+  // 📌 ② タブ切り替え時の同一FID間での値連動ロジックを含めた更新関数
   const updateValue = (key, value, isFile2 = false) => {
     if (isFile2) {
       const newData2 = [...records2];
       newData2[selectedIndex][key] = value;
+      
+      // 📌 両タブに同じFIDがある場合に連動して変更する処理
+      if (key !== "_isCompleted" && isTwoFiles && records[selectedIndex]) {
+        const fieldIdx2 = headers2.indexOf(key);
+        if (fieldIdx2 !== -1) {
+          const fid2 = fields2[fieldIdx2];
+          if (fid2) {
+            const strFid2 = String(fid2).trim();
+            const targetIdx1 = fields.findIndex(f => f && String(f).trim() === strFid2);
+            if (targetIdx1 !== -1) {
+              const targetHeader1 = headers[targetIdx1];
+              const newData1 = [...records];
+              newData1[selectedIndex][targetHeader1] = value;
+              setRecords(newData1);
+            }
+          }
+        }
+      }
+
       setRecords2(newData2);
     } else {
       const newData = [...records];
       newData[selectedIndex][key] = value;
+      
       // 点検完了チェックの場合は両ファイルの完了フラグを同期
       if (key === "_isCompleted" && isTwoFiles && records2[selectedIndex]) {
         const newData2 = [...records2];
         newData2[selectedIndex]._isCompleted = value;
         setRecords2(newData2);
+      } else if (key !== "_isCompleted" && isTwoFiles && records2[selectedIndex]) {
+        // 📌 両タブに同じFIDがある場合に連動して変更する処理
+        const fieldIdx1 = headers.indexOf(key);
+        if (fieldIdx1 !== -1) {
+          const fid1 = fields[fieldIdx1];
+          if (fid1) {
+            const strFid1 = String(fid1).trim();
+            const targetIdx2 = fields2.findIndex(f => f && String(f).trim() === strFid1);
+            if (targetIdx2 !== -1) {
+              const targetHeader2 = headers2[targetIdx2];
+              const newData2 = [...records2];
+              newData2[selectedIndex][targetHeader2] = value;
+              setRecords2(newData2);
+            }
+          }
+        }
       }
       setRecords(newData);
     }
   };
 
-  // 📌 戻るボタン押下時の必須チェックバリデーション（⑤ 点検詳細02の漏れを修正）
+  // 📌 戻るボタン押下時の必須チェックバリデーションおよび①非表示項目のクリア処理
   const handleBack = () => {
     const currentRec1 = records[selectedIndex];
     const errors1 = [];
@@ -610,9 +647,11 @@ function App() {
 
     // 📌 ⑤ 点検詳細02（2つ目のファイル）のチェック処理追加
     const errors2 = [];
+    let currentRec2 = null;
+    let visibleMap2 = {};
     if (isTwoFiles && records2[selectedIndex]) {
-      const currentRec2 = records2[selectedIndex];
-      const visibleMap2 = getVisibleFieldsMap(currentRec2, true);
+      currentRec2 = records2[selectedIndex];
+      visibleMap2 = getVisibleFieldsMap(currentRec2, true);
 
       headers2.forEach((h, i) => {
         if ((h && h.includes("◆")) || (h && h.includes("■"))) return;
@@ -643,6 +682,32 @@ function App() {
 
       alert("必須項目で未入力または未選択箇所があります");
       return; // 画面遷移をストップ
+    }
+
+    // 📌 【修正内容①】非表示項目の値を空値（未入力・未選択）にクリアする処理
+    const updatedRec1 = { ...currentRec1 };
+    headers.forEach((h, i) => {
+      const currentFid = fields[i];
+      if (currentFid && visibleMap1[currentFid] === false) {
+        updatedRec1[h] = "";
+      }
+    });
+
+    const newRecords1 = [...records];
+    newRecords1[selectedIndex] = updatedRec1;
+    setRecords(newRecords1);
+
+    if (isTwoFiles && currentRec2) {
+      const updatedRec2 = { ...currentRec2 };
+      headers2.forEach((h, i) => {
+        const currentFid = fields2[i];
+        if (currentFid && visibleMap2[currentFid] === false) {
+          updatedRec2[h] = "";
+        }
+      });
+      const newRecords2 = [...records2];
+      newRecords2[selectedIndex] = updatedRec2;
+      setRecords2(newRecords2);
     }
 
     // エラーがなければクリアして戻る
