@@ -1581,18 +1581,18 @@ function App() {
             React.createElement("button", {
               className: `tab-button tab-01 ${activeTab === "file1" ? "active" : "inactive"}`,
               onClick: () => setActiveTab("file1")
-            }, "点検詳細01"),
+            }, "📑点検詳細01"),
             React.createElement("button", {
               className: `tab-button tab-02 ${activeTab === "file2" ? "active" : "inactive"}`,
               onClick: () => setActiveTab("file2")
-            }, "点検詳細02")
+            }, "📑点検詳細02")
           )
         )
       ),
 
       /* 📌 ④ 点検詳細01と02のスクロールを独立させた表示領域 */
       React.createElement("div", { className: "detail-content-scroll" },
-        // タブ1 (🗂️点検詳細01)
+        // タブ1 (点検詳細01)
         React.createElement("div", {
           ref: tab1ScrollRef,
           className: "tab-scroll-container theme-tab1",
@@ -1603,7 +1603,7 @@ function App() {
           )
         ),
 
-        // タブ2 (🗂️点検詳細02)
+        // タブ2 (点検詳細02)
         isTwoFiles && currentRecord2 && React.createElement("div", {
           ref: tab2ScrollRef,
           className: "tab-scroll-container theme-tab2",
