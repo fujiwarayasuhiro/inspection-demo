@@ -19,10 +19,6 @@ body {
   font-weight: bold;
   font-size: 18px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
 }
 
 .header-title {
@@ -32,6 +28,10 @@ body {
 
 /* 📌 【追加】ヘッダー右端の「✚追加」ボタンのスタイル */
 .header-add-btn {
+  position: absolute; /* 絶対配置に変更 */
+  right: 16px;        /* 右端からの余白（ヘッダーのpaddingに合わせる） */
+  top: 50%;           /* 上から50%の位置へ */
+  transform: translateY(-50%); /* 縦方向の中央揃え */
   background: #ffffff;
   color: #0078d4;
   border: none;
@@ -47,7 +47,7 @@ body {
 
 .header-add-btn:active {
   background: #e1f0fc;
-  transform: translateY(1px);
+  transform: translateY(-50%) scale(0.98); /* 中央揃えを維持しつつ縮小 */
 }
 
 /* 📌 バージョン情報のスタイル */
