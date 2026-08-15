@@ -1056,11 +1056,11 @@ function App() {
             ),
             isAccordionOpen && React.createElement("div", { className: "accordion-body" },
               React.createElement("div", { className: "loaded-file-section" },
-                React.createElement("div", { className: "loaded-file-label" }, "📄点検詳細01"),
+                React.createElement("div", { className: "loaded-file-label" }, "📋点検詳細01"),
                 React.createElement("div", { className: "loaded-file-name" }, file1Obj ? file1Obj.fileName : "")
               ),
               isTwoFiles && React.createElement("div", { className: "loaded-file-section" },
-                React.createElement("div", { className: "loaded-file-label" }, "📄点検詳細02"),
+                React.createElement("div", { className: "loaded-file-label" }, "📋点検詳細02"),
                 React.createElement("div", { className: "loaded-file-name" }, file2Obj ? file2Obj.fileName : "")
               )
             )
