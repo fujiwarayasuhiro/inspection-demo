@@ -1161,7 +1161,8 @@ function App() {
             className: "header-back-btn",
             onClick: () => setScreen("list")
           }, "＜戻る"),
-          "アプリバージョン情報"
+          React.createElement("span", { className: "header-title" }, "アプリバージョン情報"),
+          React.createElement("div", { style: { width: "70px", visibility: "hidden" } }) // 📌 戻るボタン分の幅確保による中央揃え調整
         ),
         React.createElement("div", { className: "container info-container" },
           React.createElement("div", { className: "info-card" },
@@ -1181,7 +1182,8 @@ function App() {
             className: "header-back-btn",
             onClick: () => setScreen("list")
           }, "＜戻る"),
-          "ライセンス情報"
+          React.createElement("span", { className: "header-title" }, "ライセンス情報"),
+          React.createElement("div", { style: { width: "70px", visibility: "hidden" } }) // 📌 戻るボタン分の幅確保による中央揃え調整
         ),
         React.createElement("div", { className: "container info-container" },
           React.createElement("div", { className: "info-card" },
@@ -1209,7 +1211,7 @@ function App() {
             onClick: () => setIsMenuOpen(true)
           }, "Ξ"),
           React.createElement("span", { className: "header-title" }, "点検入力アプリ"),
-          /* 📌 【修正内容②】トースト通知成功後・読み込み完了時にヘッダー右端に「✚追加」ボタンを配置 */
+          /* 📌 トースト通知成功後・読み込み完了時にヘッダー右端に「✚追加」ボタンを配置 */
           isLoaded && React.createElement("button", {
             className: "header-add-btn",
             onClick: handleAddRecord
@@ -1520,11 +1522,8 @@ function App() {
             onClick: () => setIsMenuOpen(true)
           }, "Ξ"),
           React.createElement("span", { className: "header-title" }, "点検詳細入力"),
-          /* 📌 【修正内容②】詳細画面の青色ヘッダー右端にも「✚追加」ボタンを配置 */
-          isLoaded && React.createElement("button", {
-            className: "header-add-btn",
-            onClick: handleAddRecord
-          }, "✚追加")
+          /* 📌 【修正内容②】詳細画面の青色ヘッダー右端にあった「✚追加」ボタンは削除 */
+          React.createElement("div", { style: { width: "40px", visibility: "hidden" } }) // 📌 ハンバーガーメニュー分の幅確保による中央揃え調整
         ),
         React.createElement("div", { className: "action-bar" },
           React.createElement("div", { className: "action-left" },
