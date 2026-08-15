@@ -859,6 +859,66 @@ select.input-error:focus {
   filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.05)); /* ほんのり影 */
 }
 
+/* 📌 アコーディオンカードスタイル */
+.accordion-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #0078d4;
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.15);
+}
+
+.accordion-header {
+  background-color: #0078d4;
+  color: #ffffff;
+  padding: 14px 16px;
+  font-weight: bold;
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.accordion-arrow {
+  font-size: 12px;
+  transition: transform 0.2s ease;
+}
+
+.accordion-arrow.open {
+  transform: rotate(180deg);
+}
+
+.accordion-body {
+  padding: 16px;
+  background-color: #ffffff;
+}
+
+.loaded-file-section {
+  margin-bottom: 12px;
+}
+
+.loaded-file-section:last-child {
+  margin-bottom: 0;
+}
+
+.loaded-file-label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 4px;
+}
+
+.loaded-file-name {
+  font-size: 14px;
+  color: #555555;
+  padding-bottom: 6px;
+  border-bottom: 1.5 solid #0078d4;
+  word-break: break-all;
+}
+
 /* 📱 スマホ最適化 */
 @media (max-width: 480px) {
   .list-screen {
