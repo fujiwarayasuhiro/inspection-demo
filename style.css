@@ -48,6 +48,10 @@ body {
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .header-add-btn:active {
