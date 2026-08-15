@@ -742,8 +742,10 @@ select.input-error:focus {
 
 /* ヘッダー戻るボタン（サブ画面用） */
 .header-back-btn {
-  position: static;
-  transform: none;
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid #fff;
   color: #fff;
@@ -751,7 +753,6 @@ select.input-error:focus {
   padding: 4px 10px;
   font-size: 14px;
   cursor: pointer;
-  white-space: nowrap;
 }
 
 /* 📌 セクションラベル用スタイル */
@@ -812,7 +813,7 @@ select.input-error:focus {
 }
 
 .info-container {
-  padding: 20px 16px;
+  padding: 20px;
   box-sizing: border-box;
   width: 100%;
 }
