@@ -18,6 +18,7 @@ function App() {
   const [activeTab, setActiveTab] = useState("file1"); // "file1" | "file2"
 
   const [screen, setScreen] = useState("list"); // "list" | "detail" | "app-version" | "license"
+  const [previousScreen, setPreviousScreen] = useState("list"); // 📌 【修正①】元の画面を保持するStateを追加
   const [isMenuOpen, setIsMenuOpen] = useState(false); // ハンバーガーメニュー開閉
 
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -640,6 +641,7 @@ function App() {
       setActiveTab("file1");
       setIsDetailCardOpen(true);
       setScreen("detail");
+      showToast("系統・拠点情報を追加入力してください"); // 📌 【修正内容②】追加時にトースト通知を表示
     }
   };
 
@@ -1131,12 +1133,14 @@ function App() {
           React.createElement("li", {
             onClick: () => {
               closeMenuWithAnimation();
+              setPreviousScreen(screen); // 📌 【修正内容①】遷移前の画面情報を記憶させる
               setScreen("app-version");
             }
           }, "アプリバージョン情報"),
           React.createElement("li", {
             onClick: () => {
               closeMenuWithAnimation();
+              setPreviousScreen(screen); // 📌 【修正内容①】遷移前の画面情報を記憶させる
               setScreen("license");
             }
           }, "ライセンス情報"),
@@ -1159,7 +1163,7 @@ function App() {
         React.createElement("div", { className: "header" },
           React.createElement("button", {
             className: "header-back-btn",
-            onClick: () => setScreen("list")
+            onClick: () => setScreen(previousScreen) // 📌 【修正内容①】記憶した元の画面へ戻る
           }, "＜戻る"),
           React.createElement("span", { className: "header-title" }, "アプリバージョン情報"),
           React.createElement("div", { style: { width: "70px", visibility: "hidden" } }) // 📌 戻るボタン分の幅確保による中央揃え調整
@@ -1180,7 +1184,7 @@ function App() {
         React.createElement("div", { className: "header" },
           React.createElement("button", {
             className: "header-back-btn",
-            onClick: () => setScreen("list")
+            onClick: () => setScreen(previousScreen) // 📌 【修正内容①】記憶した元の画面へ戻る
           }, "＜戻る"),
           React.createElement("span", { className: "header-title" }, "ライセンス情報"),
           React.createElement("div", { style: { width: "70px", visibility: "hidden" } }) // 📌 戻るボタン分の幅確保による中央揃え調整
@@ -1515,6 +1519,10 @@ function App() {
   return (
     React.createElement("div", { className: "detail-screen" },
       renderSideMenu(),
+
+      // 📌 【修正内容②】詳細画面でもトースト通知を表示できるように追記
+      toastMessage && React.createElement("div", { className: "toast-notification" }, toastMessage),
+
       React.createElement("div", { className: "sticky-header" },
         React.createElement("div", { className: "header" }, 
           React.createElement("button", {
